@@ -120,6 +120,9 @@ BEGIN {
             [int] $ResultsCounts = 1
         )
 
+        # TheMovieDB API Address
+        $BaseURL = "https://api.themoviedb.org/3"
+
         # Escape String to be used in URL Search
         $EscapedString = [uri]::EscapeDataString($SearchString)
 
@@ -141,6 +144,9 @@ BEGIN {
             [string] $APIKey
         )
 
+        # TheMovieDB API Address
+        $BaseURL = "https://api.themoviedb.org/3"
+
         # Create TV Show URI
         $URI = "$BaseURL/tv/$($TVShowID)?api_key=$APIKey"
 
@@ -158,6 +164,9 @@ BEGIN {
             [Parameter(Mandatory)][int] $SeasonNumber,
             [string] $APIKey
         )
+
+        # TheMovieDB API Address
+        $BaseURL = "https://api.themoviedb.org/3"
 
         # Create TV Show Season URI
         $URI = "$BaseURL/tv/$($TVShowID)/season/$($SeasonNumber)?api_key=$APIKey"

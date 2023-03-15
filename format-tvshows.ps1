@@ -117,6 +117,7 @@ BEGIN {
         param(
             [Parameter(Mandatory)][string] $SearchString,
             [string] $APIKey,
+            [int] $Year,
             [int] $ResultsCounts = 1
         )
 
@@ -127,7 +128,7 @@ BEGIN {
         $EscapedString = [uri]::EscapeDataString($SearchString)
 
         # Create Search Query URL
-        $SearchParams = "query=$EscapedString&api_key=$APIKey"
+        $SearchParams = [string]::Join('&',"query=$EscapedString","api_key=$APIKey","first_air_date_year=$Year")
         $SearchQuery = "$BaseURL/search/tv?$SearchParams"
 
         # Search for the TV Show and Pulls out top results
@@ -219,11 +220,29 @@ PROCESS {
         #Grab TV Show Name From Folder Name
         $FolderName = Split-Path $FolderPath -leaf
 
-        #Remove Year from Folder Name, Othwerwise API Can't Find Results
-        $FolderName =  $FolderName -replace '\s\(\d{4}\)',''
+        # Check For Year Tag and Get Value Ready for Search Query if Found
+        if ($FolderName -match '\s\(\d{4}\)') {
+            $YearSearch = $FolderName -match '\s\(\d{4}\)' | Select-Object -First 1
+            | ForEach-Object {
+                # Returns Section of the String that the Regex Validated
+                $Matches.Values -Replace '[^\d]'
+            }
+        }
+
+        # Combine TV Show Name with Search Year Criteria
+        $SearchString = $FolderName -replace '\s\(\d{4}\)',''
+
+        # Splat Paramters Used for Find-TheMovieDBTVShowID Function
+        $Params = @{
+            APIKey = $TheMovieDB_API
+            SearchString = $SearchString
+        }
+
+        # Add YearSearch if one was found.
+        if ($YearSearch) { $Params.Year = $YearSearch }
 
         # Call Get API to get TV Show ID
-        $Results = Find-TheMovieDBTVShowID $FolderName -APIKey $TheMovieDB_API
+        $Results = Find-TheMovieDBTVShowID @Params
 
         # Verify Results were Returned
         if ($Results.count -lt 1) {

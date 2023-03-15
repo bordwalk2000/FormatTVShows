@@ -50,6 +50,10 @@ None. format-tvshows.ps1 does not generate any output.
 Author: Bradley Herbst
 Created: Febuary 9th, 2023
 
+PROBLEMS: Doesn't currently handle processing two Episodes in one File.
+It will rename the file to the first episode and you will need to manually fix
+the name and specify the second episode.sDo you
+
 
 # Script to recreate TV Show folder structure to allow testing of the script
 param(
@@ -116,14 +120,14 @@ BEGIN {
             [int] $ResultsCounts = 1
         )
 
-        #Escape String to be used in URL Search
+        # Escape String to be used in URL Search
         $EscapedString = [uri]::EscapeDataString($SearchString)
 
-        #Create Search Query URL
+        # Create Search Query URL
         $SearchParams = "query=$EscapedString&api_key=$APIKey"
         $SearchQuery = "$BaseURL/search/tv?$SearchParams"
 
-        #Search for the TV Show and Pulls out top results
+        # Search for the TV Show and Pulls out top results
         $APIData = Invoke-WebRequest -Uri $SearchQuery -ErrorAction Stop
         $Results = ($APIData.Content | ConvertFrom-Json).results
         | Select-Object -First $ResultsCounts id, name, first_air_date, overview
@@ -137,10 +141,10 @@ BEGIN {
             [string] $APIKey
         )
 
-        #Create TV Show URI
+        # Create TV Show URI
         $URI = "$BaseURL/tv/$($TVShowID)?api_key=$APIKey"
 
-        #Calls the API for TV Show Data
+        # Calls the API for TV Show Data
         $APIData = Invoke-WebRequest -Uri $URI -ErrorAction Stop
         $Results = $APIData.Content | ConvertFrom-Json
         | Select-Object name, first_air_date, number_of_seasons, seasons
@@ -155,7 +159,7 @@ BEGIN {
             [string] $APIKey
         )
 
-        #Create TV Show Season URI
+        # Create TV Show Season URI
         $URI = "$BaseURL/tv/$($TVShowID)/season/$($SeasonNumber)?api_key=$APIKey"
 
         #Calls the API for TV Show Season Data
@@ -166,10 +170,10 @@ BEGIN {
         Return $Results
     }
 
-    #TheMovieDB API Address
+    # TheMovieDB API Address
     $BaseURL = "https://api.themoviedb.org/3"
 
-    #System Check for Invalid File Name Characters
+    # System Check for Invalid File Name Characters
     $InvalidFileNameChars = [string]::join('',
         ([IO.Path]::GetInvalidFileNameChars())
     ) -replace '\\', '\\'
@@ -183,12 +187,12 @@ PROCESS {
 
     # Check if Able to Successfully Call TheMovieDB API
     try {
-        Invoke-RestMethod -Uri "$BaseURL/genre/movie/list?api_key=$TheMovieDB_API"
-        # Don't Return Results
-        | Out-Null
+        Write-Verbose "Test API Connection"
+        Write-Debug $(Invoke-RestMethod -Uri "$BaseURL/genre/movie/list?api_key=$TheMovieDB_API")
     }
     catch {
         $StatusCode = $_.Exception.Response.StatusCode
+        Write-Debug API StatusCode: $StatusCode
         if ($StatusCode -eq 401) {
             $ErrorMessage = "Error Code: 401 Unauthroized.  " +
             "Unable to Connect to API."
@@ -209,18 +213,19 @@ PROCESS {
         #Remove Year from Folder Name, Othwerwise API Can't Find Results
         $FolderName =  $FolderName -replace '\s\(\d{4}\)',''
 
-        #Call Get API to get TV Show ID
+        # Call Get API to get TV Show ID
         $Results = Find-TheMovieDBTVShowID $FolderName -APIKey $TheMovieDB_API
 
         # Verify Results were Returned
         if ($Results.count -lt 1) {
-            $ErrorMessage = "Unable to find results based on folder name.`r`n" +
+            $ErrorMessage = "Unable to find results based on tv show search query: $SearchString`r`n" +
             "Either update folder name or supply TheMovieDB TV Show ID."
             Write-Error $ErrorMessage -ErrorAction Stop
         }
 
         # Populate TVShowID Variable
         $TVShowID = $Results.ID
+        Write-Verbose "TV Show TheMovieDB ID: $TVShowID"
     }
 
     # Get TV Show Information
@@ -240,6 +245,7 @@ PROCESS {
 
     # Put TV Show Folder Name String Together.
     $TVShowFolderName = "$($FormatedTVShowName) ($FirstedAiredYear)"
+    Write-Debug "TV Show Folder Name: $TVShowFolderName"
 
     # Define Variable for Path to Newly Named Folder
     $UpdatedFolderPath = (
@@ -264,7 +270,9 @@ PROCESS {
     $TVShowInfo.seasons
     | Sort-Object season_number
     | ForEach-Object {
-        #Create Season Folder if it Doesn't Exist
+         Write-Verbose "Processing Season $("{0:D2}" -f ([int]$_.season_number))"
+
+        # Create Season Folder if it Doesn't Exist with 2-Digit Season Number
         if (-not(
                 Test-Path -Path $(
                     Join-Path -Path $UpdatedFolderPath `
@@ -287,20 +295,23 @@ PROCESS {
             (Get-TheMovieDBSeasonInfo @Params).episodes
         | Sort-Object episode_number
         | ForEach-Object {
-            # Creates String for Specifying Season and Episode Numbers
+            # Creates String for Specifying 2-Digit Season and Episode Numbers
             $FullEpisodeNumber =
             $("S{0:D2}" -f ([int]$_.season_number)) +
             $(if (-not($NoSeparator)) { $Separator }) +
             $("E{0:D2}" -f ([int]$_.episode_number))
+            Write-Verbose "Processing Episode $FullEpisodeNumber"
 
             # Assign Episode Name to Variable
             $EpisodeTitle = $_.name
+            Write-Debug "Original Episode Title: $EpisodeTitle"
 
-            # Remove Colon from the Name; Not a Supported File Name Character on Windows
+            # Remove Colon from the Name; Not a Supported Windows Filename Character.
             $EpisodeTitle = $_.name -Replace (':', ' -')
 
-            #Verify No Invalid File Name Characters in Episode Name
+            # Verify No Invalid File Name Characters in Episode Name
             $EpisodeTitle = $EpisodeTitle -replace "[$InvalidFileNameChars]", ''
+            Write-Debug "Filtered Episode Title: $EpisodeTitle"
 
             # Finds the Correct Episode File by Matching Season & Episode Number
             # Against the Currently Processed Episode and Renames the File
@@ -364,6 +375,7 @@ PROCESS {
 
 END {
     # Removes Empty Folders
+    Write-Verbose "Remove Empty Folders"
     Get-ChildItem -Path $UpdatedFolderPath -Recurse
     | Where-Object {
         $_.PSIsContainer -and

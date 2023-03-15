@@ -263,9 +263,15 @@ PROCESS {
     $FormatedTVShowName = $TVShowInfo.name -replace '^(the|a|an) (.*)$', '$2, $1'
 
     # Remove Colon from the Name; Not a Supported File Name Character on Windows
-    $FormatedTVShowName = $FormatedTVShowName -Replace (':', ' -')
+    $FormatedTVShowName = $FormatedTVShowName -Replace (': ', ' - ')
 
-    #Verify No Invalid File Name Characters in TV Show Name
+    # Replace Open Parentheses with Dash
+    $FormatedTVShowName = $FormatedTVShowName -Replace (' \(', ' - ')
+
+    # Remove Special Characters Not Supported On Different Operating Systems As Valid File Name Characters.
+    $FormatedTVShowName = $FormatedTVShowName -Replace '[?(){}]'
+
+    # Remove Colon from the Name; Not a Supported Windows Filename Character.
     $FormatedTVShowName = $FormatedTVShowName -replace "[$InvalidFileNameChars]", ''
 
     # Grab Only the Year from the First Aired Date
@@ -334,8 +340,17 @@ PROCESS {
             $EpisodeTitle = $_.name
             Write-Debug "Original Episode Title: $EpisodeTitle"
 
-            # Remove Colon from the Name; Not a Supported Windows Filename Character.
-            $EpisodeTitle = $_.name -Replace (':', ' -')
+            # Replace Colon with Dash
+            $EpisodeTitle = $EpisodeTitle -Replace (': ', ' - ')
+
+            # Replace Colon in Middle of String with UniCode Colon Character
+            $EpisodeTitle = $EpisodeTitle -Replace (':','꞉')
+
+            # Replace Open Parentheses with Dash
+            $EpisodeTitle = $EpisodeTitle -Replace (' \(', ' - ')
+
+            # Remove Special Characters Not Supported On Different Operating Systems As Valid File Name Characters.
+            $EpisodeTitle = $EpisodeTitle -Replace '[?(){}]'
 
             # Verify No Invalid File Name Characters in Episode Name
             $EpisodeTitle = $EpisodeTitle -replace "[$InvalidFileNameChars]", ''

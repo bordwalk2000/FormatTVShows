@@ -109,7 +109,8 @@ param (
     [ValidatePattern('[xX\.\-_ ]')]
     [ValidateLength(1, 1)]
     [string] $Separator = ".",
-    [switch] $NoSeparator
+    [switch] $NoSeparator,
+    [switch] $Print
 )
 
 BEGIN {
@@ -214,6 +215,13 @@ PROCESS {
             Write-Error $ErrorMessage -ErrorAction Stop
         }
     }
+
+    <# 
+        TODO: SUB Folders
+    #>
+
+    
+
 
     # Find TheMovieDB TV Show ID if Not Specified
     if (!$TVShowID) {
@@ -378,32 +386,16 @@ PROCESS {
                 )
             }
             # Rename the File Found to Correct Name Format
-            | Rename-Item -NewName {
-                    ($TVShowInfo.name,
-                $FullEpisodeNumber,
-                $EpisodeTitle -join ' ') + $_.extension
-            } -ErrorAction Continue
-
-            # Figures Out What Season Folder the Files Should be and Moves Them by
-            # Matching Season & Episode Number Against What is Being Processed
-            Get-ChildItem -Path $UpdatedFolderPath -File -Recurse
-            | Where-Object {
-                (
-                    $_.Name -match $(
-                            ($FullEpisodeNumber -match '[sS]\d{2}')
-                        | Select-Object -First 1
-                        # Returns Section of the String that the Regex Validated
-                        | ForEach-Object { $Matches.Values }
-                    )
-                ) -and
-                (
-                    $_.Name -match $(
-                            ($FullEpisodeNumber -match '[eE]\d{2}')
-                        | Select-Object -First 1
-                        # Returns Section of the String that the Regex Validated
-                        | ForEach-Object { $Matches.Values }
-                    )
-                )
+            | ForEach-Object {
+                $NewName = ($TVShowInfo.name,$FullEpisodeNumber,$EpisodeTitle -join ' ') + $($_.extension)
+                try {
+                    Rename-Item -Path $_ -NewName $NewName -ErrorAction Stop -PassThru
+                    Write-Debug "Renamed File Name: $NewName"
+                }
+                catch {
+                    Write-Error -Message "Unable to Rename / Moving File to $($TVShowInfo.name,$FullEpisodeNumber,$EpisodeTitle -join ' ')"
+                    Write-Error -Message "Error Reason: $($Error[0].CategoryInfo.Reason)"
+                }
             }
             # Moves File to Correct Season Folder
             | Move-Item -Destination $(

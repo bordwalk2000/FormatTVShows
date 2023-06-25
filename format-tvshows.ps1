@@ -62,12 +62,16 @@ param(
 )
 
 $Path = (New-Item -ItemType Directory -Path $DestinationFolder -Name $(
-        Split-Path $SourceBackupFolder -Leaf)
+        Split-Path $SourceBackupFolder -Leaf) -ErrorAction Stop
 ).FullName
 Get-ChildItem -Path $SourceBackupFolder -Recurse
 | ForEach-Object {
     if ($_.Gettype().Name -eq 'DirectoryInfo') {
-        New-Item -ItemType Directory -Path $Path -Name $_.BaseName
+        New-Item -ItemType Directory -Path $(
+            Join-Path -Path $Path -ChildPath (
+                Split-Path $_.FullName
+            ).Replace($SourceBackupFolder,'')
+        ) -Name $_.BaseName
     }
     else {
         New-Item -Path $(
@@ -216,11 +220,11 @@ PROCESS {
         }
     }
 
-    <# 
+    <#
         TODO: SUB Folders
     #>
 
-    
+
 
 
     # Find TheMovieDB TV Show ID if Not Specified

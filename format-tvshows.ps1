@@ -92,6 +92,9 @@ https://github.com/bordwalk2000/format-tvshows
 #>
 #Requires -Version 7
 [CmdletBinding()]
+# Ignore VSCode warning saying that $count is not being used, because it's defined in the begin scope.
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseDeclaredVarsMoreThanAssignments', 'count',
+Justification = 'variable is used in another scope')]
 param (
     [Parameter(Mandatory)]
     [ValidateNotNullOrEmpty()]
@@ -381,6 +384,91 @@ PROCESS {
                 catch {
                     Write-Error -Message "Unable to Rename / Moving File to $($TVShowInfo.name,$FullEpisodeNumber,$EpisodeTitle -join ' ')"
                     Write-Error -Message "Error Reason: $($Error[0].CategoryInfo.Reason)"
+                }
+            }
+            # Moves File to Correct Season Folder
+            | Move-Item -Destination $(
+                Join-Path -Path $UpdatedFolderPath `
+                    -ChildPath $(
+                    "Season {0:D2}" -f ([int]$FullEpisodeNumber.Substring(1, 2))
+                )
+            ) -ErrorAction Continue
+
+            # Does the same lookup process as above, this time looking for subtitle files.
+            Get-ChildItem -Path $UpdatedFolderPath -Recurse
+            # Filter Results to Ether Directories or Files with Subtitle Files Extensions
+            | Where-Object {
+                $_.PSIsContainer -eq $true -or
+                $_.Extension -in @('.srt','.smi', '.ssa', '.ass', '.vtt', '.VOBSUB', '.pgs')}
+            # Process Files First so it Doesn't Have Problems with the Folder Subtitle Files Rename Process
+            | Sort-Object PSIsContainer
+            # Grab Result that Matches the Season and Episode Number being Processed
+            | Where-Object {
+                (
+                    $_.Name -match $(
+                            ($FullEpisodeNumber -match '[sS]\d{2}')
+                        | Select-Object -First 1
+                        # Returns Section of the String that the Regex Validated
+                        | ForEach-Object { $Matches.Values }
+                    )
+                ) -and
+                (
+                    $_.Name -match $(
+                            ($FullEpisodeNumber -match '[eE]\d{2}')
+                        | Select-Object -First 1
+                        # Returns Section of the String that the Regex Validated
+                        | ForEach-Object { $Matches.Values }
+                    )
+                )
+            }
+            | ForEach-Object {
+                # Check if Currently ProcessedS Object is a Directory or File
+                if ($_.PSIsContainer) {
+                    Write-Verbose "Currently Pocessing $_.Name Subtitle Directory"
+                    # Grab List of Files in that Directory.
+                    $_ | Get-ChildItem
+                    # Filter out Wrong or Broken Subtitle Files, but keeks 0KB for Testing
+                    | Where-Object {$_.Length -eq 0kb -or $_.Length -gt 5kb}
+                    | Sort-Object $_.Name
+                    | ForEach-Object -Begin {$count=1} -Process {
+                        # Remove all Characters in Name before First Alph character and Replace English with en
+                        $SubtitleName = ($_.BaseName.Replace('English','en') -Replace('[^a-z]+','')) + $(if($count -gt 1){".$count"})
+                        # Grabs Episode Name
+                        $EpisodeName = ($TVShowInfo.name,$FullEpisodeNumber,$EpisodeTitle -join ' ')
+                        # Combines the strings
+                        $NewName = ($EpisodeName, $SubtitleName -join '.') + $($_.extension)
+
+                        # Renames the Files Found
+                        try {
+                            Rename-Item -Path $_ -NewName $NewName -ErrorAction Stop -PassThru
+                            Write-Debug "Renamed File Name: $NewName"
+                        }
+                        catch {
+                            Write-Error -Message "Unable to Rename / Moving File to $($TVShowInfo.name,$FullEpisodeNumber,$EpisodeTitle -join ' ')"
+                            Write-Error -Message "Error Reason: $($Error[0].CategoryInfo.Reason)"
+                        }
+
+                        # Increment Count Counter
+                        $count++
+                    }
+                }
+                else {
+                    # Results is a file.
+                    $SubtitleName = ($_.BaseName.Replace('English','en') -Replace('[^a-z]+',''))
+                    # Grabs Episode Name
+                    $EpisodeName = ($TVShowInfo.name,$FullEpisodeNumber,$EpisodeTitle -join ' ')
+                    # Combines the strings
+                    $NewName = ($EpisodeName, $SubtitleName -join '.') + $($_.extension)
+
+                    # Renames the Files
+                    try {
+                        Rename-Item -Path $_ -NewName $NewName -ErrorAction Stop -PassThru
+                        Write-Debug "Renamed File Name: $NewName"
+                    }
+                    catch {
+                        Write-Error -Message "Unable to Rename / Moving File to $($TVShowInfo.name,$FullEpisodeNumber,$EpisodeTitle -join ' ')"
+                        Write-Error -Message "Error Reason: $($Error[0].CategoryInfo.Reason)"
+                    }
                 }
             }
             # Moves File to Correct Season Folder

@@ -74,19 +74,9 @@ Get-ChildItem -Path $SourceBackupFolder -Recurse
         ) -Name $_.BaseName
     }
     else {
-        New-Item -Path $(
-            Join-Path -Path $DestinationFolder -ChildPath $(
-                Split-Path $SourceBackupFolder -Leaf
-            )
-            | Join-Path -ChildPath $(
-                $_.Directory -match "(?<=$(
-                    [regex]::escape(
-                        $(Split-Path $SourceBackupFolder -Leaf)
-                    )
-                )).*$"
-                | ForEach-Object { $Matches.Values }
-            )
-        ) -Name $_.Name
+        New-Item -Path $([WildcardPattern]::Escape($(
+            Join-Path -Path $Path -ChildPath (Split-Path $_.FullName).Replace($SourceBackupFolder,'')
+        ))) -Name $_.Name
     }
 }
 
@@ -219,13 +209,6 @@ PROCESS {
             Write-Error $ErrorMessage -ErrorAction Stop
         }
     }
-
-    <#
-        TODO: SUB Folders
-    #>
-
-
-
 
     # Find TheMovieDB TV Show ID if Not Specified
     if (!$TVShowID) {

@@ -48,16 +48,16 @@ None. format-tvshows.ps1 does not generate any output.
 
 .NOTES
 Author: Bradley Herbst
-Created: Febuary 9th, 2023
+Created: February 9th, 2023
 
 PROBLEMS: Doesn't currently handle processing two Episodes in one File.
 It will rename the file to the first episode and you will need to manually fix
-the name and specify the second episode.sDo you
+the name and specify the second episode.
 
 
 # Script to recreate TV Show folder structure to allow testing of the script
 param(
-    [Parameter(Mandatory)][string] $SourceBackupFolder,
+    [Parameter(Mandatory)][IO.DirectoryInfo] $SourceBackupFolder,
     [string] $DestinationFolder = [Environment]::GetFolderPath('UserProfile')
 )
 
@@ -95,7 +95,7 @@ https://github.com/bordwalk2000/format-tvshows
 param (
     [Parameter(Mandatory)]
     [ValidateNotNullOrEmpty()]
-    [string] $FolderPath,
+    [IO.DirectoryInfo] $FolderPath,
     [ValidateNotNullOrEmpty()]
     [string] $TheMovieDB_API,
     [string] $TVShowID,
@@ -103,8 +103,7 @@ param (
     [ValidatePattern('[xX\.\-_ ]')]
     [ValidateLength(1, 1)]
     [string] $Separator = ".",
-    [switch] $NoSeparator,
-    [switch] $Print
+    [switch] $NoSeparator
 )
 
 BEGIN {
@@ -335,10 +334,10 @@ PROCESS {
             $EpisodeTitle = $_.name
             Write-Debug "Original Episode Title: $EpisodeTitle"
 
-            # Replace Colon with Dash
+            # Replace Colon at End of String with a Dashte
             $EpisodeTitle = $EpisodeTitle -Replace (': ', ' - ')
 
-            # Replace Colon in Middle of String with UniCode Colon Character
+            # Replace Colon in Middle of String with Unicode Colon Character
             $EpisodeTitle = $EpisodeTitle -Replace (':','꞉')
 
             # Replace Open Parentheses with Dash
@@ -374,7 +373,7 @@ PROCESS {
             }
             # Rename the File Found to Correct Name Format
             | ForEach-Object {
-                $NewName = ($TVShowInfo.name,$FullEpisodeNumber,$EpisodeTitle -join ' ') + $($_.extension)
+                $NewName = ($FormatedTVShowName,$FullEpisodeNumber,$EpisodeTitle -join ' ') + $($_.extension)
                 try {
                     Rename-Item -Path $_ -NewName $NewName -ErrorAction Stop -PassThru
                     Write-Debug "Renamed File Name: $NewName"
@@ -404,7 +403,7 @@ END {
         @(Get-ChildItem -LiteralPath $_.Fullname -Recurse
             | Where-Object { -not($_.PSIsContainer) }).Length -eq 0
     }
-    | Remove-Item
+    | Remove-Item -Recurse
 
     # Return Successful Exit Code
     Exit 0

@@ -3,11 +3,9 @@ Function Find-TheMovieDBTVShowID {
         [Parameter(Mandatory)][string] $SearchString,
         [string] $APIKey,
         [int] $Year,
-        [int] $ResultsCounts = 1
+        [int] $ResultsCounts = 1,
+        [string] $BaseURL = "https://api.themoviedb.org/3"
     )
-
-    # TheMovieDB API Address
-    $BaseURL = "https://api.themoviedb.org/3"
 
     # Escape String to be used in URL Search
     $EscapedString = [uri]::EscapeDataString($SearchString)

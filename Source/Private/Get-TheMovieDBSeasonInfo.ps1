@@ -2,11 +2,9 @@ Function Get-TheMovieDBSeasonInfo {
     param(
         [Parameter(Mandatory)][int] $TVShowID,
         [Parameter(Mandatory)][int] $SeasonNumber,
-        [string] $APIKey
+        [string] $APIKey,
+        [string] $BaseURL = "https://api.themoviedb.org/3"
     )
-
-    # TheMovieDB API Address
-    $BaseURL = "https://api.themoviedb.org/3"
 
     # Create TV Show Season URI
     $URI = "$BaseURL/tv/$($TVShowID)/season/$($SeasonNumber)?api_key=$APIKey"

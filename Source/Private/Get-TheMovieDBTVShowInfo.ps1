@@ -1,11 +1,9 @@
 Function Get-TheMovieDBTVShowInfo {
         param(
             [Parameter(Mandatory)][int] $TVShowID,
-            [string] $APIKey
+            [string] $APIKey,
+            [string] $BaseURL = "https://api.themoviedb.org/3"
         )
-
-        # TheMovieDB API Address
-        $BaseURL = "https://api.themoviedb.org/3"
 
         # Create TV Show URI
         $URI = "$BaseURL/tv/$($TVShowID)?api_key=$APIKey"

@@ -107,25 +107,23 @@ Function Format-TVShow {
         [ValidatePattern('[xX\.\-_ ]')]
         [ValidateLength(1, 1)]
         [string] $Separator = ".",
-        [switch] $NoSeparator
+        [switch] $NoSeparator,
+        [string] $BaseURL = "https://api.themoviedb.org/3"
     )
-    
+
     BEGIN {
-        # TheMovieDB API Address
-        $BaseURL = "https://api.themoviedb.org/3"
-    
         # System Check for Invalid File Name Characters
         $InvalidFileNameChars = [string]::join('',
             ([IO.Path]::GetInvalidFileNameChars())
         ) -replace '\\', '\\'
     }
-    
+
     PROCESS {
         # Verifiy Folder Path is Valid
         if (-not (Test-Path $FolderPath)) {
             Write-Error 'Folder Path File Not Valid' -ErrorAction Stop
         }
-    
+
         # Check if Able to Successfully Call TheMovieDB API
         try {
             Write-Verbose "Test API Connection"
@@ -145,12 +143,12 @@ Function Format-TVShow {
                 Write-Error $ErrorMessage -ErrorAction Stop
             }
         }
-    
+
         # Find TheMovieDB TV Show ID if Not Specified
         if (!$TVShowID) {
             #Grab TV Show Name From Folder Name
             $FolderName = Split-Path $FolderPath -leaf
-    
+
             # Check For Year Tag and Get Value Ready for Search Query if Found
             if ($FolderName -match '\s\(\d{4}\)') {
                 $YearSearch = $FolderName -match '\s\(\d{4}\)' | Select-Object -First 1
@@ -159,64 +157,65 @@ Function Format-TVShow {
                     $Matches.Values -Replace '[^\d]'
                 }
             }
-    
+
             # Combine TV Show Name with Search Year Criteria
             $SearchString = $FolderName -replace '\s\(\d{4}\)',''
-    
+
             # Splat Paramters Used for Find-TheMovieDBTVShowID Function
             $Params = @{
                 APIKey = $TheMovieDB_API
                 SearchString = $SearchString
+                BaseURL = $BaseURL
             }
-    
+
             # Add YearSearch if one was found.
             if ($YearSearch) { $Params.Year = $YearSearch }
-    
+
             # Call Get API to get TV Show ID
             $Results = Find-TheMovieDBTVShowID @Params
-    
+
             # Verify Results were Returned
             if ($Results.count -lt 1) {
                 $ErrorMessage = "Unable to find results based on tv show search query: $SearchString`r`n" +
                 "Either update folder name or supply TheMovieDB TV Show ID."
                 Write-Error $ErrorMessage -ErrorAction Stop
             }
-    
+
             # Populate TVShowID Variable
             $TVShowID = $Results.ID
             Write-Verbose "TV Show TheMovieDB ID: $TVShowID"
         }
-    
+
         # Get TV Show Information
-        $TVShowInfo = Get-TheMovieDBTVShowInfo -TVShowID $TVShowID -APIKey $TheMovieDB_API
-    
+        $TVShowInfo = Get-TheMovieDBTVShowInfo -TVShowID $TVShowID -APIKey $TheMovieDB_API -BaseURL $BaseURL
+
         # Move 'The/A/An' to the End of the Title
         $FormatedTVShowName = $TVShowInfo.name -replace '^(the|a|an) (.*)$', '$2, $1'
-    
+
         # Remove Colon from the Name; Not a Supported File Name Character on Windows
         $FormatedTVShowName = $FormatedTVShowName -Replace (': ', ' - ')
-    
+
         # Replace Open Parentheses with Dash
         $FormatedTVShowName = $FormatedTVShowName -Replace (' \(', ' - ')
-    
+
         # Remove Special Characters Not Supported On Different Operating Systems As Valid File Name Characters.
         $FormatedTVShowName = $FormatedTVShowName -Replace '[?(){}]'
-    
+
         # Remove Colon from the Name; Not a Supported Windows Filename Character.
         $FormatedTVShowName = $FormatedTVShowName -replace "[$InvalidFileNameChars]", ''
-    
+
         # Grab Only the Year from the First Aired Date
         $FirstedAiredYear = $TVShowInfo.first_air_date.Split('-')[0]
-    
+
         # Put TV Show Folder Name String Together.
         $TVShowFolderName = "$($FormatedTVShowName) ($FirstedAiredYear)"
         Write-Debug "TV Show Folder Name: $TVShowFolderName"
-    
+
         # Define Variable for Path to Newly Named Folder
         $UpdatedFolderPath = (
             Join-Path -Path (Split-Path -Path $FolderPath -Parent
             ) -ChildPath $TVShowFolderName)
-    
+
         # Checks Folder Name is Different From New Name
         if ($(Split-Path -Path $FolderPath -Leaf) -ne $TVShowFolderName) {
             # Verify New Name Folder Doesn't Already Exists
@@ -230,13 +229,13 @@ Function Format-TVShow {
                 Write-Error $ErrorMessage -ErrorAction Stop
             }
         }
-    
+
         # Processes the Season Data in the TV Show Info Results
         $TVShowInfo.seasons
         | Sort-Object season_number
         | ForEach-Object {
              Write-Verbose "Processing Season $("{0:D2}" -f ([int]$_.season_number))"
-    
+
             # Create Season Folder if it Doesn't Exist with 2-Digit Season Number
             if (-not(
                     Test-Path -Path $(
@@ -249,12 +248,13 @@ Function Format-TVShow {
                         -ChildPath $("\Season {0:D2}" -f ([int]$_.season_number))
                 )
             }
-    
+
             # Define Parameters to be Used in Get-TheMovieDBSeasonInfo Function
             $Params = @{
-                TVShowID     = $TVShowID
+                TVShowID = $TVShowID
                 SeasonNumber = $_.season_number
-                APIKey       = $TheMovieDB_API
+                APIKey = $TheMovieDB_API
+                BaseURL = $BaseURL
             }
             # Call API to Get Season Info and Processes Data on the Episodes
                 (Get-TheMovieDBSeasonInfo @Params).episodes
@@ -266,27 +266,27 @@ Function Format-TVShow {
                 $(if (-not($NoSeparator)) { $Separator }) +
                 $("E{0:D2}" -f ([int]$_.episode_number))
                 Write-Verbose "Processing Episode $FullEpisodeNumber"
-    
+
                 # Assign Episode Name to Variable
                 $EpisodeTitle = $_.name
                 Write-Debug "Original Episode Title: $EpisodeTitle"
-    
+
                 # Replace Colon at End of String with a Dashte
                 $EpisodeTitle = $EpisodeTitle -Replace (': ', ' - ')
-    
+
                 # Replace Colon in Middle of String with Unicode Colon Character
                 $EpisodeTitle = $EpisodeTitle -Replace (':','꞉')
-    
+
                 # Replace Open Parentheses with Dash
                 $EpisodeTitle = $EpisodeTitle -Replace (' \(', ' - ')
-    
+
                 # Remove Special Characters Not Supported On Different Operating Systems As Valid File Name Characters.
                 $EpisodeTitle = $EpisodeTitle -Replace '[?(){}]'
-    
+
                 # Verify No Invalid File Name Characters in Episode Name
                 $EpisodeTitle = $EpisodeTitle -replace "[$InvalidFileNameChars]", ''
                 Write-Debug "Filtered Episode Title: $EpisodeTitle"
-    
+
                 # Finds the Correct Episode File by Matching Season & Episode Number
                 # Against the Currently Processed Episode and Renames the File
                 Get-ChildItem -Path $UpdatedFolderPath -File -Recurse
@@ -327,7 +327,7 @@ Function Format-TVShow {
                         "Season {0:D2}" -f ([int]$FullEpisodeNumber.Substring(1, 2))
                     )
                 ) -ErrorAction Continue
-    
+
                 # Does the same lookup process as above, this time looking for subtitle files.
                 Get-ChildItem -Path $UpdatedFolderPath -Recurse
                 # Filter Results to Ether Directories or Files with Subtitle Files Extensions
@@ -371,7 +371,7 @@ Function Format-TVShow {
                             $EpisodeName = ($TVShowInfo.name,$FullEpisodeNumber,$EpisodeTitle -join ' ')
                             # Combines the strings
                             $NewName = ($EpisodeName, $SubtitleName -join '.') + $($_.extension)
-    
+
                             # Renames the Files Found
                             try {
                                 Rename-Item -Path $_ -NewName $NewName -ErrorAction Stop -PassThru
@@ -381,7 +381,7 @@ Function Format-TVShow {
                                 Write-Error -Message "Unable to Rename / Moving File to $($TVShowInfo.name,$FullEpisodeNumber,$EpisodeTitle -join ' ')"
                                 Write-Error -Message "Error Reason: $($Error[0].CategoryInfo.Reason)"
                             }
-    
+
                             # Increment Count Counter
                             $count++
                         }
@@ -393,7 +393,7 @@ Function Format-TVShow {
                         $EpisodeName = ($TVShowInfo.name,$FullEpisodeNumber,$EpisodeTitle -join ' ')
                         # Combines the strings
                         $NewName = ($EpisodeName, $SubtitleName -join '.') + $($_.extension)
-    
+
                         # Renames the Files
                         try {
                             Rename-Item -Path $_ -NewName $NewName -ErrorAction Stop -PassThru
@@ -415,7 +415,7 @@ Function Format-TVShow {
             }
         }
     }
-    
+
     END {
         # Removes Empty Folders
         Write-Verbose "Remove Empty Folders"
@@ -426,7 +426,7 @@ Function Format-TVShow {
                 | Where-Object { -not($_.PSIsContainer) }).Length -eq 0
         }
         | Remove-Item -Recurse
-    
+
         # Return Successful Exit Code
         Exit 0
     }

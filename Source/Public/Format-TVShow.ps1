@@ -56,32 +56,6 @@ PROBLEMS: Doesn't currently handle processing two Episodes in one File.
 It will rename the file to the first episode and you will need to manually fix
 the name and specify the second episode.
 
-
-# Script to recreate TV Show folder structure to allow testing of the script
-param(
-    [Parameter(Mandatory)][IO.DirectoryInfo] $SourceBackupFolder,
-    [string] $DestinationFolder = [Environment]::GetFolderPath('UserProfile')
-)
-
-$Path = (New-Item -ItemType Directory -Path $DestinationFolder -Name $(
-        Split-Path $SourceBackupFolder -Leaf) -ErrorAction Stop
-).FullName
-Get-ChildItem -Path $SourceBackupFolder -Recurse
-| ForEach-Object {
-    if ($_.Gettype().Name -eq 'DirectoryInfo') {
-        New-Item -ItemType Directory -Path $(
-            Join-Path -Path $Path -ChildPath (
-                Split-Path $_.FullName
-            ).Replace($SourceBackupFolder,'')
-        ) -Name $_.BaseName
-    }
-    else {
-        New-Item -Path $([WildcardPattern]::Escape($(
-            Join-Path -Path $Path -ChildPath (Split-Path $_.FullName).Replace($SourceBackupFolder,'')
-        ))) -Name $_.Name
-    }
-}
-
 .EXAMPLE
 Format-TVShow -FolderPath 'Friends -TheMovieDB_API $env:moviedbapi -Separator "x"
 

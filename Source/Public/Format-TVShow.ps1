@@ -4,7 +4,7 @@ Renames TV Show files to a specific naming scheme and moves the files
 to their correct seasons folder.
 
 .DESCRIPTION
-The scrips calls The Movie Database, themoviedb.org api to fetch information 
+The scrips calls The Movie Database, themoviedb.org api to fetch information
 about the TV Shows, Seasons, and Episodes.
 
 It takes that data and creates Season folders for every season;
@@ -27,7 +27,7 @@ will use that ID when pulling information about the TV Show.
 
 .PARAMETER Separator
 Allows specifying the separator that is used when separating Season and
-Episode numbers.  
+Episode numbers.
 
 Example S01.E02
 
@@ -89,7 +89,7 @@ Function Format-TVShow {
 
     BEGIN {
         # System Check for Invalid File Name Characters
-        $InvalidFileNameChars = [string]::join('',
+        $InvalidFileNameChars = [string]::join('*',
             ([IO.Path]::GetInvalidFileNameChars())
         ) -replace '\\', '\\'
     }
@@ -233,7 +233,7 @@ Function Format-TVShow {
                 BaseURL = $BaseURL
             }
             # Call API to Get Season Info and Processes Data on the Episodes
-                (Get-TheMovieDBSeasonInfo @Params).episodes
+            (Get-TheMovieDBSeasonInfo @Params).episodes
             | Sort-Object episode_number
             | ForEach-Object {
                 # Creates String for Specifying 2-Digit Season and Episode Numbers
@@ -267,6 +267,9 @@ Function Format-TVShow {
                 # Against the Currently Processed Episode and Renames the File
                 Get-ChildItem -Path $UpdatedFolderPath -File -Recurse
                 | Where-Object {
+                    $_.Extension -in @(
+                        '.mkv','.avi', '.mov', '.wmv', '.mp4', '.m4v','.mpg', '.mpeg', '.flv'
+                    ) -and
                     (
                         $_.Name -match $(
                                 ($FullEpisodeNumber -match '[sS]\d{2}')
@@ -341,8 +344,8 @@ Function Format-TVShow {
                         | Where-Object {$_.Length -eq 0kb -or $_.Length -gt 5kb}
                         | Sort-Object $_.Name
                         | ForEach-Object -Begin {$count=1} -Process {
-                            # Remove all Characters in Name before First Alph character and Replace English with en
-                            $SubtitleName = ($_.BaseName.Replace('English','en') -Replace('[^a-z]+','')) + $(if($count -gt 1){".$count"})
+                            # Replace "English" with "en"
+                            $SubtitleName = ($_.BaseName.Replace('English','en')) + $(if($count -gt 1){".$count"})
                             # Grabs Episode Name
                             $EpisodeName = ($TVShowInfo.name,$FullEpisodeNumber,$EpisodeTitle -join ' ')
                             # Combines the strings
@@ -364,17 +367,17 @@ Function Format-TVShow {
                     }
                     # Results is a file.
                     else {
-                        # Results is a file.
-                        $SubtitleName = ($_.BaseName.Replace('English','en') -Replace('[^a-z]+',''))
+                        # # Replace "English" with "en"
+                        # $SubtitleName = ($_.BaseName.Replace('English','en'))
                         # Grabs Episode Name
                         $EpisodeName = ($TVShowInfo.name,$FullEpisodeNumber,$EpisodeTitle -join ' ')
-                        # Combines the strings
-                        $NewName = ($EpisodeName, $SubtitleName -join '.') + $($_.extension)
+                        # Assigns the New Name to a Variable
+                        $NewName = $EpisodeName + $_.extension
 
                         # Renames the Files
                         try {
                             Rename-Item -Path $_ -NewName $NewName -ErrorAction Stop -PassThru
-                            Write-Debug "Renamed File Name: $NewName"
+                            Write-Debug "Renamed Subtitle File: $NewName"
                         }
                         catch {
                             Write-Error -Message "Unable to Rename / Moving File to $($TVShowInfo.name,$FullEpisodeNumber,$EpisodeTitle -join ' ')"

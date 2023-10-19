@@ -4,8 +4,8 @@ Renames TV Show files to a specific naming scheme and moves the files
 to their correct seasons folder.
 
 .DESCRIPTION
-The scrips calls The Movie Database, themoviedb.org,  api to fetch
-information aobut the TV Shows, Seasons, and Episodes.
+The scrips calls The Movie Database, themoviedb.org api to fetch information 
+about the TV Shows, Seasons, and Episodes.
 
 It takes that data and creates Season folders for every season;
 Renames the TV Shows episodes to the correct naming scheme; and
@@ -17,8 +17,8 @@ After the script has finished processing the files, empty folders are removed.
 Specify the path to the TV Show folder where you want the files to be processed.
 
 .PARAMETER TheMovieDB_API
-Will need to have an themoviedb.org accouunt and setup to get a free api token.
-This what allows the API calls to be authenticated in order to return data.
+Will need to have an themoviedb.org account setup to get a free api token.
+This is what allows the API calls to be authenticated to return data.
 
 .PARAMETER TVShowID
 If the search is not returning the correct TV Show or you just want to
@@ -26,8 +26,10 @@ manually specify one, you grab it off themoviedb.org website and the script
 will use that ID when pulling information about the TV Show.
 
 .PARAMETER Separator
-Allows specifing the separator that is used when separating Season and Episode
-numbers.  Example S01.E02
+Allows specifying the separator that is used when separating Season and
+Episode numbers.  
+
+Example S01.E02
 
 Allows the following characters to be used as a separator 'xX.-_ ' and a one
 character limit.
@@ -81,7 +83,7 @@ Get-ChildItem -Path $SourceBackupFolder -Recurse
 }
 
 .EXAMPLE
-./format-tvshows.ps1 -FolderPath 'Friends -TheMovieDB_API $env:api -Separator "x"
+Format-TVShow -FolderPath 'Friends -TheMovieDB_API $env:moviedbapi -Separator "x"
 
 Basic example specify a specific separator.
 
@@ -386,6 +388,7 @@ Function Format-TVShow {
                             $count++
                         }
                     }
+                    # Results is a file.
                     else {
                         # Results is a file.
                         $SubtitleName = ($_.BaseName.Replace('English','en') -Replace('[^a-z]+',''))

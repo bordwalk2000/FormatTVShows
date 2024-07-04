@@ -71,20 +71,38 @@ Function Format-TVShow {
     [CmdletBinding()]
     # Ignore VSCode warning saying that $count is not being used, because it's defined in the begin scope.
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseDeclaredVarsMoreThanAssignments', 'count',
-    Justification = 'variable is used in another scope')]
+        Justification = 'variable is used in another scope')]
     param (
-        [Parameter(Mandatory)]
+        [Parameter(
+            Mandatory
+        )]
         [ValidateNotNullOrEmpty()]
-        [IO.DirectoryInfo] $FolderPath,
+        [IO.DirectoryInfo]
+        $FolderPath,
+        
+        [Parameter()]
         [ValidateNotNullOrEmpty()]
-        [string] $TheMovieDB_API,
-        [string] $TVShowID,
+        [string]
+        $TheMovieDB_API,
+
+        [Parameter()]
+        [string]
+        $TVShowID,
+
+        [Parameter()]
         [ValidateNotNullOrEmpty()]
         [ValidatePattern('[xX\.\-_ ]')]
         [ValidateLength(1, 1)]
-        [string] $Separator = ".",
-        [switch] $NoSeparator,
-        [string] $BaseURL = "https://api.themoviedb.org/3"
+        [string]
+        $Separator = ".",
+
+        [Parameter()]
+        [switch]
+        $NoSeparator,
+
+        [Parameter()]
+        [string]
+        $BaseURL = "https://api.themoviedb.org/3"
     )
 
     BEGIN {
@@ -135,13 +153,13 @@ Function Format-TVShow {
             }
 
             # Combine TV Show Name with Search Year Criteria
-            $SearchString = $FolderName -replace '\s\(\d{4}\)',''
+            $SearchString = $FolderName -replace '\s\(\d{4}\)', ''
 
             # Splat Parameters Used for Find-TheMovieDBTVShowID Function
             $Params = @{
-                APIKey = $TheMovieDB_API
+                APIKey       = $TheMovieDB_API
                 SearchString = $SearchString
-                BaseURL = $BaseURL
+                BaseURL      = $BaseURL
             }
 
             # Add YearSearch if one was found.
@@ -210,7 +228,7 @@ Function Format-TVShow {
         $TVShowInfo.seasons
         | Sort-Object season_number
         | ForEach-Object {
-             Write-Verbose "Processing Season $("{0:D2}" -f ([int]$_.season_number))"
+            Write-Verbose "Processing Season $("{0:D2}" -f ([int]$_.season_number))"
 
             # Create Season Folder if it Doesn't Exist with 2-Digit Season Number
             if (-not(
@@ -227,10 +245,10 @@ Function Format-TVShow {
 
             # Define Parameters to be Used in Get-TheMovieDBSeasonInfo Function
             $Params = @{
-                TVShowID = $TVShowID
+                TVShowID     = $TVShowID
                 SeasonNumber = $_.season_number
-                APIKey = $TheMovieDB_API
-                BaseURL = $BaseURL
+                APIKey       = $TheMovieDB_API
+                BaseURL      = $BaseURL
             }
             # Call API to Get Season Info and Processes Data on the Episodes
             (Get-TheMovieDBSeasonInfo @Params).episodes
@@ -251,7 +269,7 @@ Function Format-TVShow {
                 $EpisodeTitle = $EpisodeTitle -Replace (': ', ' - ')
 
                 # Replace Colon in Middle of String with Unicode Colon Character
-                $EpisodeTitle = $EpisodeTitle -Replace (':','꞉')
+                $EpisodeTitle = $EpisodeTitle -Replace (':', '꞉')
 
                 # Replace Open Parentheses with Dash
                 $EpisodeTitle = $EpisodeTitle -Replace (' \(', ' - ')
@@ -268,7 +286,7 @@ Function Format-TVShow {
                 Get-ChildItem -Path $UpdatedFolderPath -File -Recurse
                 | Where-Object {
                     $_.Extension -in @(
-                        '.mkv','.avi', '.mov', '.wmv', '.mp4', '.m4v','.mpg', '.mpeg', '.flv'
+                        '.mkv', '.avi', '.mov', '.wmv', '.mp4', '.m4v', '.mpg', '.mpeg', '.flv'
                     ) -and
                     (
                         $_.Name -match $(
@@ -289,7 +307,7 @@ Function Format-TVShow {
                 }
                 # Rename the File Found to Correct Name Format
                 | ForEach-Object {
-                    $NewName = ($FormattedTVShowName,$FullEpisodeNumber,$EpisodeTitle -join ' ') + $($_.extension)
+                    $NewName = ($FormattedTVShowName, $FullEpisodeNumber, $EpisodeTitle -join ' ') + $($_.extension)
                     try {
                         Rename-Item -Path $_ -NewName $NewName -ErrorAction Stop -PassThru
                         Write-Debug "Renamed File Name: $NewName"
@@ -312,7 +330,7 @@ Function Format-TVShow {
                 # Filter Results to Ether Directories or Files with Subtitle Files Extensions
                 | Where-Object {
                     $_.PSIsContainer -eq $true -or
-                    $_.Extension -in @('.srt','.smi', '.ssa', '.ass', '.vtt', '.vobsub', '.pgs')}
+                    $_.Extension -in @('.srt', '.smi', '.ssa', '.ass', '.vtt', '.vobsub', '.pgs') }
                 # Process Files First so it Doesn't Have Problems with the Folder Subtitle Files Rename Process
                 | Sort-Object PSIsContainer
                 # Grab Result that Matches the Season and Episode Number being Processed
@@ -341,13 +359,13 @@ Function Format-TVShow {
                         # Grab List of Files in that Directory.
                         $_ | Get-ChildItem
                         # Filter out Wrong or Broken Subtitle Files, but keeps 0KB for Testing
-                        | Where-Object {$_.Length -eq 0kb -or $_.Length -gt 5kb}
+                        | Where-Object { $_.Length -eq 0kb -or $_.Length -gt 5kb }
                         | Sort-Object $_.Name
-                        | ForEach-Object -Begin {$count=1} -Process {
+                        | ForEach-Object -Begin { $count = 1 } -Process {
                             # Replace "English" with "en"
-                            $SubtitleName = ($_.BaseName.Replace('English','en')) + $(if($count -gt 1){".$count"})
+                            $SubtitleName = ($_.BaseName.Replace('English', 'en')) + $(if ($count -gt 1) { ".$count" })
                             # Grabs Episode Name
-                            $EpisodeName = ($TVShowInfo.name,$FullEpisodeNumber,$EpisodeTitle -join ' ')
+                            $EpisodeName = ($TVShowInfo.name, $FullEpisodeNumber, $EpisodeTitle -join ' ')
                             # Combines the strings
                             $NewName = ($EpisodeName, $SubtitleName -join '.') + $($_.extension)
 
@@ -370,7 +388,7 @@ Function Format-TVShow {
                         # # Replace "English" with "en"
                         # $SubtitleName = ($_.BaseName.Replace('English','en'))
                         # Grabs Episode Name
-                        $EpisodeName = ($TVShowInfo.name,$FullEpisodeNumber,$EpisodeTitle -join ' ')
+                        $EpisodeName = ($TVShowInfo.name, $FullEpisodeNumber, $EpisodeTitle -join ' ')
                         # Assigns the New Name to a Variable
                         $NewName = $EpisodeName + $_.extension
 

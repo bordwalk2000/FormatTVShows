@@ -95,7 +95,7 @@ Function Format-TVShow {
     }
 
     PROCESS {
-        # Verifiy Folder Path is Valid
+        # Verify Folder Path is Valid
         if (-not (Test-Path $FolderPath)) {
             Write-Error 'Folder Path File Not Valid' -ErrorAction Stop
         }
@@ -109,7 +109,7 @@ Function Format-TVShow {
             $StatusCode = $_.Exception.Response.StatusCode
             Write-Debug API StatusCode: $StatusCode
             if ($StatusCode -eq 401) {
-                $ErrorMessage = "Error Code: 401 Unauthroized.  " +
+                $ErrorMessage = "Error Code: 401 Unauthorized.  " +
                 "Unable to Connect to API."
                 Write-Error $ErrorMessage -ErrorAction Stop
             }
@@ -137,7 +137,7 @@ Function Format-TVShow {
             # Combine TV Show Name with Search Year Criteria
             $SearchString = $FolderName -replace '\s\(\d{4}\)',''
 
-            # Splat Paramters Used for Find-TheMovieDBTVShowID Function
+            # Splat Parameters Used for Find-TheMovieDBTVShowID Function
             $Params = @{
                 APIKey = $TheMovieDB_API
                 SearchString = $SearchString
@@ -166,25 +166,25 @@ Function Format-TVShow {
         $TVShowInfo = Get-TheMovieDBTVShowInfo -TVShowID $TVShowID -APIKey $TheMovieDB_API -BaseURL $BaseURL
 
         # Move 'The/A/An' to the End of the Title
-        $FormatedTVShowName = $TVShowInfo.name -replace '^(the|a|an) (.*)$', '$2, $1'
+        $FormattedTVShowName = $TVShowInfo.name -replace '^(the|a|an) (.*)$', '$2, $1'
 
         # Remove Colon from the Name; Not a Supported File Name Character on Windows
-        $FormatedTVShowName = $FormatedTVShowName -Replace (': ', ' - ')
+        $FormattedTVShowName = $FormattedTVShowName -Replace (': ', ' - ')
 
         # Replace Open Parentheses with Dash
-        $FormatedTVShowName = $FormatedTVShowName -Replace (' \(', ' - ')
+        $FormattedTVShowName = $FormattedTVShowName -Replace (' \(', ' - ')
 
         # Remove Special Characters Not Supported On Different Operating Systems As Valid File Name Characters.
-        $FormatedTVShowName = $FormatedTVShowName -Replace '[?(){}]'
+        $FormattedTVShowName = $FormattedTVShowName -Replace '[?(){}]'
 
         # Remove Colon from the Name; Not a Supported Windows Filename Character.
-        $FormatedTVShowName = $FormatedTVShowName -replace "[$InvalidFileNameChars]", ''
+        $FormattedTVShowName = $FormattedTVShowName -replace "[$InvalidFileNameChars]", ''
 
         # Grab Only the Year from the First Aired Date
-        $FirstedAiredYear = $TVShowInfo.first_air_date.Split('-')[0]
+        $FirstAiredYear = $TVShowInfo.first_air_date.Split('-')[0]
 
         # Put TV Show Folder Name String Together.
-        $TVShowFolderName = "$($FormatedTVShowName) ($FirstedAiredYear)"
+        $TVShowFolderName = "$($FormattedTVShowName) ($FirstAiredYear)"
         Write-Debug "TV Show Folder Name: $TVShowFolderName"
 
         # Define Variable for Path to Newly Named Folder
@@ -247,7 +247,7 @@ Function Format-TVShow {
                 $EpisodeTitle = $_.name
                 Write-Debug "Original Episode Title: $EpisodeTitle"
 
-                # Replace Colon at End of String with a Dashte
+                # Replace Colon at End of String with a Dash
                 $EpisodeTitle = $EpisodeTitle -Replace (': ', ' - ')
 
                 # Replace Colon in Middle of String with Unicode Colon Character
@@ -289,7 +289,7 @@ Function Format-TVShow {
                 }
                 # Rename the File Found to Correct Name Format
                 | ForEach-Object {
-                    $NewName = ($FormatedTVShowName,$FullEpisodeNumber,$EpisodeTitle -join ' ') + $($_.extension)
+                    $NewName = ($FormattedTVShowName,$FullEpisodeNumber,$EpisodeTitle -join ' ') + $($_.extension)
                     try {
                         Rename-Item -Path $_ -NewName $NewName -ErrorAction Stop -PassThru
                         Write-Debug "Renamed File Name: $NewName"
@@ -312,7 +312,7 @@ Function Format-TVShow {
                 # Filter Results to Ether Directories or Files with Subtitle Files Extensions
                 | Where-Object {
                     $_.PSIsContainer -eq $true -or
-                    $_.Extension -in @('.srt','.smi', '.ssa', '.ass', '.vtt', '.VOBSUB', '.pgs')}
+                    $_.Extension -in @('.srt','.smi', '.ssa', '.ass', '.vtt', '.vobsub', '.pgs')}
                 # Process Files First so it Doesn't Have Problems with the Folder Subtitle Files Rename Process
                 | Sort-Object PSIsContainer
                 # Grab Result that Matches the Season and Episode Number being Processed
@@ -337,10 +337,10 @@ Function Format-TVShow {
                 | ForEach-Object {
                     # Check if Currently ProcessedS Object is a Directory or File
                     if ($_.PSIsContainer) {
-                        Write-Verbose "Currently Pocessing $_.Name Subtitle Directory"
+                        Write-Verbose "Currently Processing $_.Name Subtitle Directory"
                         # Grab List of Files in that Directory.
                         $_ | Get-ChildItem
-                        # Filter out Wrong or Broken Subtitle Files, but keeks 0KB for Testing
+                        # Filter out Wrong or Broken Subtitle Files, but keeps 0KB for Testing
                         | Where-Object {$_.Length -eq 0kb -or $_.Length -gt 5kb}
                         | Sort-Object $_.Name
                         | ForEach-Object -Begin {$count=1} -Process {
@@ -402,7 +402,7 @@ Function Format-TVShow {
         Get-ChildItem -Path $UpdatedFolderPath -Recurse
         | Where-Object {
             $_.PSIsContainer -and
-            @(Get-ChildItem -LiteralPath $_.Fullname -Recurse
+            @(Get-ChildItem -LiteralPath $_.FullName -Recurse
                 | Where-Object { -not($_.PSIsContainer) }).Length -eq 0
         }
         | Remove-Item -Recurse

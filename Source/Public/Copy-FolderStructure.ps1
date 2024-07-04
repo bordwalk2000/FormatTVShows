@@ -1,23 +1,23 @@
 <#
 .SYNOPSIS
-Recreates a folder structure to allow testing of the against a copy so that
-if the Format-TVShow function doesn't work as as expected, the source files
+Recreates a folder and file structure to allow testing of the against a copy so 
+that if the Format-TVShow function doesn't work as as expected, the actual files
 are unchanged.
 
 .DESCRIPTION
-Will recreate a folder strcurue including all subfolders and files creating 0kb files 
+Will recreate a folder structure including all subfolder and files creating 0kb files 
 
 The test folder will the be saved in the root of the user profile directory
-unless a differnet destination folder location was specified.
+unless a different destination folder location was specified.
 
 .PARAMETER TVShowFolder
 Specify the path to the folder that you want to create a test copy of.
 
 .PARAMETER DestinationFolder
-Specify the location to where you want the Test TV Show folder scturure to be
+Specify the location to where you want the Test TV Show folder structure to be
 saved.  By Default it goes to the root of the user profile directory.  This is
 because since the Format-TVSHow function uses the folder name to do the search,
-it needs to be saved in a differnet location since I don't want to have the
+it needs to be saved in a different location since I don't want to have the
 name of the top level folder changed in anyways.
 
 #>

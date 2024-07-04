@@ -1,11 +1,11 @@
 <#
 .SYNOPSIS
-Recreates a folder and file structure to allow testing of the against a copy so 
+Recreates a folder and file structure to allow testing of the against a copy so
 that if the Format-TVShow function doesn't work as as expected, the actual files
 are unchanged.
 
 .DESCRIPTION
-Will recreate a folder structure including all subfolder and files creating 0kb files 
+Will recreate a folder structure including all subfolder and files creating 0kb files
 
 The test folder will the be saved in the root of the user profile directory
 unless a different destination folder location was specified.
@@ -23,26 +23,43 @@ name of the top level folder changed in anyways.
 #>
 Function Copy-FolderStructure {
     param(
-        [Parameter(Mandatory)][IO.DirectoryInfo] $TVShowFolder,
-        [IO.DirectoryInfo] $DestinationFolder = [Environment]::GetFolderPath('UserProfile')
+        # The source folder whose structure needs to be copied
+        [Parameter(
+            Mandatory
+        )]
+        [IO.DirectoryInfo]
+        $TVShowFolder,
+
+        # The destination folder where the structure will be copied, default is the user's profile directory
+        [Parameter()]
+        [IO.DirectoryInfo]
+        $DestinationFolder = [Environment]::GetFolderPath('UserProfile')
     )
-    
+
+    # Create the root folder in the destination directory with the same name as the source folder
     $Path = (New-Item -ItemType Directory -Path $DestinationFolder -Name $(
             Split-Path $TVShowFolder -Leaf) -ErrorAction Stop
     ).FullName
+
+    # Get all items in the source folder recursively
     Get-ChildItem -Path $TVShowFolder -Recurse
     | ForEach-Object {
+        # Define ChildPath Path
+        $ChildPath = (Split-Path $_.FullName).Replace($TVShowFolder, '')
+
+        # If the item is a directory, create the corresponding directory in the destination
         if ($_.Gettype().Name -eq 'DirectoryInfo') {
             New-Item -ItemType Directory -Path $(
-                Join-Path -Path $Path -ChildPath (
-                    Split-Path $_.FullName
-                ).Replace($TVShowFolder,'')
+                Join-Path -Path $Path -ChildPath $ChildPath
             ) -Name $_.BaseName
         }
+        # If the item is a file, create a placeholder file in the corresponding location in the destination
         else {
-            New-Item -Path $([WildcardPattern]::Escape($(
-                Join-Path -Path $Path -ChildPath (Split-Path $_.FullName).Replace($TVShowFolder,'')
-            ))) -Name $_.Name
+            New-Item -Path $(
+                [WildcardPattern]::Escape(
+                    $(Join-Path -Path $Path -ChildPath $ChildPath)
+                )
+            ) -Name $_.Name
         }
     }
 }

@@ -1,15 +1,13 @@
 <#
 .SYNOPSIS
-Renames TV Show files to a specific naming scheme and moves the files
-to their correct seasons folder.
+Renames TV Show files to a specific naming scheme and moves the files to their correct seasons folder.
 
 .DESCRIPTION
-The scrips calls The Movie Database, themoviedb.org api to fetch information
-about the TV Shows, Seasons, and Episodes.
+The script calls The Movie Database, themoviedb.org API to fetch information about the TV Shows, Seasons,
+and Episodes.
 
-It takes that data and creates Season folders for every season;
-Renames the TV Shows episodes to the correct naming scheme; and
-moves the episodes into the correct season folder.
+It takes that data and creates Season folders for every season; Renames the TV Shows episodes to the
+correct naming scheme, and moves the episodes into the correct season folder.
 
 After the script has finished processing the files, empty folders are removed.
 
@@ -17,28 +15,22 @@ After the script has finished processing the files, empty folders are removed.
 Specify the path to the TV Show folder where you want the files to be processed.
 
 .PARAMETER TheMovieDB_API
-Will need to have an themoviedb.org account setup to get a free api token.
-This is what allows the API calls to be authenticated to return data.
+Will need to have a themoviedb.org account setup to get a free API token. This is what allows the API
+calls to be authenticated to return data.
 
 .PARAMETER TVShowID
-If the search is not returning the correct TV Show or you just want to
-manually specify one, you grab it off themoviedb.org website and the script
-will use that ID when pulling information about the TV Show.
+If the search is not returning the correct TV Show or you just want to manually specify one, you grab it
+off themoviedb.org website and the script will use that ID when pulling information about the TV Show.
 
 .PARAMETER Separator
-Allows specifying the separator that is used when separating Season and
-Episode numbers.
+Allows specifying the separator that is used when separating Season and Episode numbers. Example S01.E02
 
-Example S01.E02
+Allows the following characters to be used as a separator 'xX.-_ ' and a one character limit.
 
-Allows the following characters to be used as a separator 'xX.-_ ' and a one
-character limit.
-
-Defaults to use the period of nothing is defined.
+Defaults to use the period if nothing is defined.
 
 .PARAMETER NoSeparator
-Will cause the script to not use a separator between Season and Episode
-numbers.  Example S01E02
+Will cause the script to not use a separator between Season and Episode numbers.  Example S01E02
 
 Will override anything defined in the -Separator parameter.
 
@@ -64,14 +56,16 @@ Basic example specify a specific separator.
 .LINK
 Git Repository Location
 https://github.com/bordwalk2000/format-tvshows
-
 #>
-#Requires -Version 7
+
 Function Format-TVShow {
     [CmdletBinding()]
     # Ignore VSCode warning saying that $count is not being used, because it's defined in the begin scope.
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseDeclaredVarsMoreThanAssignments', 'count',
-        Justification = 'variable is used in another scope')]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
+        'PSUseDeclaredVarsMoreThanAssignments',
+        'count',
+        Justification = 'variable is used in another scope'
+    )]
     param (
         [Parameter(
             Mandatory
@@ -79,7 +73,7 @@ Function Format-TVShow {
         [ValidateNotNullOrEmpty()]
         [IO.DirectoryInfo]
         $FolderPath,
-        
+
         [Parameter()]
         [ValidateNotNullOrEmpty()]
         [string]
@@ -127,13 +121,11 @@ Function Format-TVShow {
             $StatusCode = $_.Exception.Response.StatusCode
             Write-Debug API StatusCode: $StatusCode
             if ($StatusCode -eq 401) {
-                $ErrorMessage = "Error Code: 401 Unauthorized.  " +
-                "Unable to Connect to API."
+                $ErrorMessage = "Error Code: 401 Unauthorized. Unable to Connect to API. `n$_"
                 Write-Error $ErrorMessage -ErrorAction Stop
             }
             else {
-                $ErrorMessage = "Expected 200, got $([int]$StatusCode)  " +
-                "Unable to Connect to API."
+                $ErrorMessage = "Expected 200, got $([int]$StatusCode) Unable to Connect to API. `n$_"
                 Write-Error $ErrorMessage -ErrorAction Stop
             }
         }
@@ -313,8 +305,7 @@ Function Format-TVShow {
                         Write-Debug "Renamed File Name: $NewName"
                     }
                     catch {
-                        Write-Error -Message "Unable to Rename / Moving File to $($TVShowInfo.name,$FullEpisodeNumber,$EpisodeTitle -join ' ')"
-                        Write-Error -Message "Error Reason: $($Error[0].CategoryInfo.Reason)"
+                        Write-Error -Message "Unable to Rename $($_.Name) to $NewName. `n $_"
                     }
                 }
                 # Moves File to Correct Season Folder
@@ -375,8 +366,8 @@ Function Format-TVShow {
                                 Write-Debug "Renamed File Name: $NewName"
                             }
                             catch {
-                                Write-Error -Message "Unable to Rename / Moving File to $($TVShowInfo.name,$FullEpisodeNumber,$EpisodeTitle -join ' ')"
-                                Write-Error -Message "Error Reason: $($Error[0].CategoryInfo.Reason)"
+                                $Message = "Unable to Rename / Move file to $EpisodeName. `n$_."
+                                Write-Error -Message $Message
                             }
 
                             # Increment Count Counter
@@ -398,8 +389,7 @@ Function Format-TVShow {
                             Write-Debug "Renamed Subtitle File: $NewName"
                         }
                         catch {
-                            Write-Error -Message "Unable to Rename / Moving File to $($TVShowInfo.name,$FullEpisodeNumber,$EpisodeTitle -join ' ')"
-                            Write-Error -Message "Error Reason: $($Error[0].CategoryInfo.Reason)"
+                            Write-Error -Message "Unable to Rename $($_.Name) to $NewName. `n $_"
                         }
                     }
                 }

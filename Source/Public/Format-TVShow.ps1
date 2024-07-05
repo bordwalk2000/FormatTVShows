@@ -7,7 +7,8 @@ The script calls The Movie Database, themoviedb.org API to fetch information abo
 and Episodes.
 
 It takes that data and creates Season folders for every season; Renames the TV Shows episodes to the
-correct naming scheme, and moves the episodes into the correct season folder.
+correct specified scheme normally "[TV Show Name] [Season & Episode Number] [Episode Name]".
+Then moves the episodes into the correct season folder.
 
 After the script has finished processing the files, empty folders are removed.
 
@@ -53,11 +54,7 @@ Format-TVShow -FolderPath 'Friends -TheMovieDB_API $env:moviedbapi -Separator "x
 
 Basic example specify a specific separator.
 
-.LINK
-Git Repository Location
-https://github.com/bordwalk2000/format-tvshows
 #>
-
 Function Format-TVShow {
     [CmdletBinding()]
     # Ignore VSCode warning saying that $count is not being used, because it's defined in the begin scope.

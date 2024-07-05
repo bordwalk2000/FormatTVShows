@@ -10,7 +10,7 @@ Will recreate a folder structure including all subfolder and files creating 0kb 
 The test folder will the be saved in the root of the user profile directory
 unless a different destination folder location was specified.
 
-.PARAMETER TVShowFolder
+.PARAMETER SourceFolder
 Specify the path to the folder that you want to create a test copy of.
 
 .PARAMETER DestinationFolder
@@ -20,15 +20,19 @@ because since the Format-TVSHow function uses the folder name to do the search,
 it needs to be saved in a different location since I don't want to have the
 name of the top level folder changed in anyways.
 
+.EXAMPLE
+PS> Copy-FolderStructure "StarGate (1997)"
+
 #>
 Function Copy-FolderStructure {
     param(
         # The source folder whose structure needs to be copied
         [Parameter(
-            Mandatory
+            Mandatory,
+            Position = 0
         )]
         [IO.DirectoryInfo]
-        $TVShowFolder,
+        $SourceFolder,
 
         # The destination folder where the structure will be copied, default is the user's profile directory
         [Parameter()]
@@ -38,14 +42,14 @@ Function Copy-FolderStructure {
 
     # Create the root folder in the destination directory with the same name as the source folder
     $Path = (New-Item -ItemType Directory -Path $DestinationFolder -Name $(
-            Split-Path $TVShowFolder -Leaf) -ErrorAction Stop
+            Split-Path $SourceFolder -Leaf) -ErrorAction Stop
     ).FullName
 
     # Get all items in the source folder recursively
-    Get-ChildItem -Path $TVShowFolder -Recurse
+    Get-ChildItem -Path $SourceFolder -Recurse
     | ForEach-Object {
         # Define ChildPath Path
-        $ChildPath = (Split-Path $_.FullName).Replace($TVShowFolder, '')
+        $ChildPath = (Split-Path $_.FullName).Replace($SourceFolder, '')
 
         # If the item is a directory, create the corresponding directory in the destination
         if ($_.Gettype().Name -eq 'DirectoryInfo') {

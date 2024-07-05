@@ -98,7 +98,7 @@ PrivateData = @{
         Tags = @("tv", "shows", "movies", "media", "plex", "jellyfin")
 
         # A URL to the license for this module.
-        LicenseUri = 'https://github.com/bordwalk2000/MediaFileManager/License'
+        LicenseUri = 'https://github.com/bordwalk2000/MediaFileManager/License.md'
 
         # A URL to the main website for this project.
         ProjectUri = 'https://github.com/bordwalk2000/MediaFileManager'

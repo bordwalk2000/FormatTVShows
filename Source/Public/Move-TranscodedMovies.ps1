@@ -91,14 +91,7 @@ Function Move-TranscodedMovies {
 
         # Remove Empty Folders
         Write-Verbose "Removing Empty Folders"
-        Get-ChildItem -Path $Movie -recurse
-        | Where-Object {
-            $_.PSIsContainer -and @(
-                Get-ChildItem -LiteralPath $_.FullName -r
-                | Where-Object { !$_.PSIsContainer }
-            ).Length -eq 0
-        }
-        | Remove-Item -Recurse
+            Remove-EmptyDirectories $Movie
 
         # Move transcoded movie to correct Movie destination folder.
         foreach ($Directory in $MovieFolders) {

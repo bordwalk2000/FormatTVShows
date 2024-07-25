@@ -404,13 +404,7 @@ Function Format-TVShow {
     END {
         # Removes Empty Folders
         Write-Verbose "Remove Empty Folders"
-        Get-ChildItem -Path $UpdatedFolderPath -Recurse
-        | Where-Object {
-            $_.PSIsContainer -and
-            @(Get-ChildItem -LiteralPath $_.FullName -Recurse
-                | Where-Object { -not($_.PSIsContainer) }).Length -eq 0
-        }
-        | Remove-Item -Recurse
+        Remove-EmptyDirectories $UpdatedFolderPath
 
         # Return Successful Exit Code
         Exit 0

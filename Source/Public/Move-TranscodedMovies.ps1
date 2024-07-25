@@ -1,6 +1,4 @@
 <#
-Requires -Modules Storage
-
 .SYNOPSIS
 Moves transcoded movie folders to the appropriate Movies directory.
 
@@ -11,6 +9,9 @@ are moved.  Empty folders are removed during the process.
 
 .PARAMETER TranscodedFolder
 Specifies the path to the location of transcoded movie folders ready to be moved.
+
+.PARAMETER MovieDirectoryLocations
+Specifies the path to the locations of destination movie folders ready to be moved.
 
 .PARAMETER HoursLastWrite
 Specifies the number of hours to skip folders that have LastWriteTime set to less than this many
@@ -49,16 +50,33 @@ Function Move-TranscodedMovies {
         [IO.DirectoryInfo] $TranscodedFolder,
 
         [Parameter(
+            HelpMessage = "The directory path that contain the movie letters directories (ex. A-C, 0-9)."
+        )]
+        [ValidateScript(
+            {
+                Test-Path -Path $_
+            }
+        )]
+        [String[]] $MovieDirectoryLocations,
+
+        [Parameter(
             HelpMessage = "Skip folders that have LastWriteTime less than this many hours ago."
         )]
         [int] $HoursLastWrite = 20
     )
 
-    # Looked at fixed volumes to see if they contain a folder named "Movies" on the root of drive
-    # TODO: Requires Windows Storage module to run, so only currently a windows only function.
+        # In Windows looked at fixed volumes to see if they contain a folder named "Movies" on the root of drive.:
+        if (-not($MovieDirectoryLocations) -and $IsWindows) {
     $MovieDirectoryLocations = Get-Volume
     | Where-Object { $_.DriveType -eq 'Fixed' -and (Test-Path "$($_.DriveLetter):\Movies") }
-    | Select-Object @{label = "MovieDirectories"; Expression = { "$($_.DriveLetter):\Movies" } }
+            | Select-Object @{label = "Path"; Expression = { "$($_.DriveLetter):\Movies" } }
+        }
+
+        # If no value for $MovieDirectoryLocations variable, throw error and exit script.
+        if (-not($MovieDirectoryLocations)) {
+            Write-Error -Message '$MovieDirectoryLocations variable was not defined and could not be determined.'
+            exit 1
+        }
 
     # Looks at the folders in each one of the Movies directories and figures out their ascii values.
     $MovieFolders = Get-ChildItem -Path $MovieDirectoryLocations.MovieDirectories

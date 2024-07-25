@@ -96,14 +96,14 @@ Function Format-TVShow {
         $BaseURL = "https://api.themoviedb.org/3"
     )
 
-    BEGIN {
+    begin {
         # System Check for Invalid File Name Characters
         $InvalidFileNameChars = [string]::join('*',
             ([IO.Path]::GetInvalidFileNameChars())
         ) -replace '\\', '\\'
     }
 
-    PROCESS {
+    process {
         # Verify Folder Path is Valid
         if (-not (Test-Path $FolderPath)) {
             Write-Error 'Folder Path File Not Valid' -ErrorAction Stop
@@ -311,7 +311,7 @@ Function Format-TVShow {
                         -ChildPath $(
                         "Season {0:D2}" -f ([int]$FullEpisodeNumber.Substring(1, 2))
                     )
-                ) -ErrorAction Continue
+                ) -ErrorAction continue
 
                 # Does the same lookup process as above, this time looking for subtitle files.
                 Get-ChildItem -Path $UpdatedFolderPath -Recurse
@@ -396,17 +396,17 @@ Function Format-TVShow {
                         -ChildPath $(
                         "Season {0:D2}" -f ([int]$FullEpisodeNumber.Substring(1, 2))
                     )
-                ) -ErrorAction Continue
+                ) -ErrorAction continue
             }
         }
     }
 
-    END {
+    end {
         # Removes Empty Folders
         Write-Verbose "Remove Empty Folders"
         Remove-EmptyDirectories $UpdatedFolderPath
 
         # Return Successful Exit Code
-        Exit 0
+        exit 0
     }
 }

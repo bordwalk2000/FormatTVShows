@@ -6,18 +6,20 @@ Creates a new movie folder structure with predefined subfolders.
 This function creates a new parent movie folder and a set of predefined subfolders for special features such as 'Behind The Scenes', 'Deleted Scenes', 'Featurettes', and others. The parent folder is created at the specified location.
 
 .PARAMETER MovieFolderName
-The name of the movie folder to be created. This is a mandatory parameter.
+The name of the movie folder to be created.
 
 .PARAMETER SaveLocation
-The path where the movie folder and its subfolders will be created. This parameter is optional. If not specified, the folders are created in the current directory.
-
-.EXAMPLE
-New-MovieFolderStructure -MovieFolderName "NewMovie"
-Creates a new folder named "NewMovie" in the current directory with the predefined subfolders.
+The path where the movie folder and its subfolders will be created. This is a mandatory parameter.
 
 .EXAMPLE
 New-MovieFolderStructure -MovieFolderName "NewMovie" -SaveLocation "C:\Movies"
+
 Creates a new folder named "NewMovie" in the "C:\Movies" directory with the predefined subfolders.
+
+.EXAMPLE
+New-MovieFolderStructure .
+
+Creates the predefined subfolders in the current directory.
 
 .NOTES
 Author: Bradley Herbst
@@ -25,15 +27,13 @@ Created: Oct 13, 2021
 #>
 Function New-MovieFolderStructure {
     param (
-        [Parameter(
-            Mandatory,
-            Position = 0
-        )]
+        [Parameter()]
         [string]
         $MovieFolderName,
 
         [Parameter(
-            Position = 1,
+            Position = 0,
+            Mandatory,
             HelpMessage = "Path to create the empty movie folders."
         )]
         [ValidateScript(
@@ -44,8 +44,23 @@ Function New-MovieFolderStructure {
         [IO.DirectoryInfo] $SaveLocation
     )
 
+    # Define params for New-Item for movie folder name directory.
+    $params = @{
+        ItemType    = "Directory"
+        Name        = $MovieFolderName
+        Path        = $SaveLocation
+        ErrorAction = "SilentlyContinue"
+    }
+
+    # Remove empty items from params
+    foreach ($Key in @($params.Keys)) {
+        if (-not $params[$Key]) {
+            $params.Remove($Key)
+        }
+    }
+
     #Create Parent Folder
-    New-Item -ItemType Directory $MovieFolderName -ErrorAction SilentlyContinue
+    New-Item @params
 
     #Define Special Features Folders
     $Folders = 'Behind The Scenes',
@@ -64,6 +79,13 @@ Function New-MovieFolderStructure {
             Path        = $MovieFolderName
             Name        = $Folder
             ErrorAction = "SilentlyContinue"
+        }
+
+        # Remove empty items from params
+        foreach ($Key in @($Params.Keys)) {
+            if (-not $Params[$Key]) {
+                $Params.Remove($Key)
+            }
         }
 
         # Check if $SaveLocation is defined and if so add it.

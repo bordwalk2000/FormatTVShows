@@ -1,52 +1,39 @@
 <#
 .SYNOPSIS
-    Removes empty directories from a specified path.
+    Removes empty directories from the specified path.
 
 .DESCRIPTION
-    This function searches for and removes empty directories within a specified path. It can recursively check subdirectories to ensure all empty directories are removed.
+    The `Remove-EmptyDirectories` function removes directories that do not contain any files. It recursively traverses the specified path to identify and remove empty directories.
 
 .PARAMETER Path
-    The path in which to search for empty directories. This parameter is mandatory.
-
-.PARAMETER Recurse
-    Indicates whether to recursively search for empty directories in subdirectories. The default value is $true. This parameter is optional.
-
-.EXAMPLE
-    Remove-EmptyDirectories -Path "C:\Temp"
-
-    This command removes all empty directories within the "C:\Temp" directory.
-
-.EXAMPLE
-    Remove-EmptyDirectories -Path "C:\Temp" -Recurse $false
-
-    This command removes empty directories within the "C:\Temp" directory, but does not search subdirectories.
+    The path from which empty directories will be removed. This parameter is mandatory and must be a valid path.
 
 .NOTES
-    Use this function with caution, as it will permanently remove empty directories.
+    Use this function with caution, as it will permanently remove empty directories and all empty subdirectories.
 #>
 Function Remove-EmptyDirectories {
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
         "PSAvoidDefaultValueSwitchParameter", "", Scope = "Function", Target = "Recurse"
     )]
     param(
-        [Parameter(Mandatory)][string] $Path,
-        [switch] $Recurse = $true
+        [Parameter(
+            Mandatory
+        )]
+        [ValidateScript(
+            {
+                Test-Path -Path $_
+            }
+        )]
+        [string]
+        $Path
     )
 
-    # Ensure the specified path exists
-    if (-Not (Test-Path -Path $Path)) {
-        Write-Error "The specified path does not exist: $Path"
-        return
+    Get-ChildItem -Path $Path -Recurse
+    | Where-Object {
+        $_.PSIsContainer -and @(
+            Get-ChildItem -LiteralPath $_.FullName -Recurse
+            | Where-Object { -not($_.PSIsContainer) }
+        ).Length -eq 0
     }
-
-    # Get all directories, optionally including subdirectories
-    $Directories = Get-ChildItem -Path $Path -Directory -Recurse:$Recurse
-
-    # Iterate over directories and remove empty ones
-    foreach ($Directory in $Directories) {
-        if (-Not (Get-ChildItem -Path $Directory.FullName)) {
-            Remove-Item -Path $Directory.FullName -Force -Recurse
-            Write-Output "Removed empty directory: $($Directory.FullName)"
-        }
-    }
+    | Remove-Item -Recurse
 }

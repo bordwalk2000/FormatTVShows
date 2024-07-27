@@ -50,10 +50,10 @@ Function Copy-FolderStructure {
     Write-Output "Copy folder created at $Path"
 
     # Get all items in the source folder recursively
-    Get-ChildItem -Path $SourceFolder -Recurse
+    Get-ChildItem -Path $SourceFolder -Recurse -OutVariable Data
     | ForEach-Object {
         # Define ChildPath Path
-        $ChildPath = (Split-Path $_.FullName).Replace($SourceFolder, '')
+        $ChildPath = (Split-Path $_.FullName).Replace($Data[0].Parent.FullName, '')
 
         # If the item is a directory, create the corresponding directory in the destination
         if ($_.Gettype().Name -eq 'DirectoryInfo') {

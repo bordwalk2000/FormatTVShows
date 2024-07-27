@@ -144,7 +144,7 @@ Function Format-TVShow {
             # Combine TV Show Name with Search Year Criteria
             $SearchString = $FolderName -replace '\s\(\d{4}\)', ''
 
-            # Splat Parameters Used for Find-TheMovieDBTVShowID Function
+            # Splat Parameters Used for Find-TheMovieDBTVShow Function
             $Params = @{
                 APIKey       = $TheMovieDB_API
                 SearchString = $SearchString
@@ -155,7 +155,7 @@ Function Format-TVShow {
             if ($YearSearch) { $Params.Year = $YearSearch }
 
             # Call Get API to get TV Show ID
-            $Results = Find-TheMovieDBTVShowID @Params
+            $Results = Find-TheMovieDBTVShow @Params
 
             # Verify Results were Returned
             if ($Results.count -lt 1) {

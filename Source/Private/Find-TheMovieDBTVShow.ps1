@@ -21,14 +21,14 @@
     The base URL for the TMDb API. The default value is "https://api.themoviedb.org/3". This parameter is optional.
 
 .EXAMPLE
-    Find-TheMovieDBTVShowID -SearchString "Breaking Bad" -APIKey "your_api_key" -Year 2008 -ResultsCounts 1
+    Find-TheMovieDBTVShow -SearchString "Breaking Bad" -APIKey "your_api_key" -Year 2008 -ResultsCounts 1
 
     This command searches for the TV show "Breaking Bad" that first aired in 2008 and returns the top result.
 
 .NOTES
     Ensure you have a valid TheMovieDB API key to use this function.
 #>
-Function Find-TheMovieDBTVShowID {
+Function Find-TheMovieDBTVShow {
     param(
         [Parameter(Mandatory)][string] $SearchString,
         [string] $APIKey,

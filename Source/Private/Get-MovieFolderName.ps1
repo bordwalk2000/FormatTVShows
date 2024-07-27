@@ -32,11 +32,11 @@ System.String
 Returns a formatted string for the movie folder name.
 
 .NOTES
+Author: Bradley Herbst
+Created: July 26, 2024
+
 The function relies on the Find-TheMovieDBMovie function to query TheMovieDB API.
 Ensure that the API key is valid and has the necessary permissions.
-
-.LINK
-https://developers.themoviedb.org/3/getting-started/introduction
 #>
 Function Get-MovieFolderName {
     param (

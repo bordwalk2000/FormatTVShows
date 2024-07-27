@@ -41,19 +41,18 @@ None. You cannot pipe objects to format-tvshows.ps1.
 .OUTPUTS
 None. format-tvshows.ps1 does not generate any output.
 
-.NOTES
-Author: Bradley Herbst
-Created: February 9th, 2023
-
-PROBLEMS: Doesn't currently handle processing two Episodes in one File.
-It will rename the file to the first episode and you will need to manually fix
-the name and specify the second episode.
-
 .EXAMPLE
 Format-TVShow -FolderPath 'Friends -TheMovieDB_API $env:moviedbapi -Separator "x"
 
 Basic example specify a specific separator.
 
+.NOTES
+Author: Bradley Herbst
+Created: February 10th, 2017
+
+PROBLEMS: Doesn't currently handle processing two Episodes in one File.
+It will rename the file to the first episode and you will need to manually fix
+the name and specify the second episode.
 #>
 Function Format-TVShow {
     [CmdletBinding()]
@@ -280,19 +279,19 @@ Function Format-TVShow {
                         '.mkv', '.avi', '.mov', '.wmv', '.mp4', '.m4v', '.mpg', '.mpeg', '.flv'
                     ) -and
                     (
-                        $_.Name -match $(
-                                ($FullEpisodeNumber -match '[sS]\d{2}')
-                            | Select-Object -First 1
-                            # Returns Section of the String that the Regex Validated
-                            | ForEach-Object { $Matches.Values }
-                        )
-                    ) -and
-                    (
-                        $_.Name -match $(
-                                ($FullEpisodeNumber -match '[eE]\d{2}')
-                            | Select-Object -First 1
-                            # Returns Section of the String that the Regex Validated
-                            | ForEach-Object { $Matches.Values }
+                                $_.Name -match $(
+                                    ($FullEpisodeNumber -match '[sS]\d{2}')
+                                    | Select-Object -First 1
+                                    # Returns Section of the String that the Regex Validated
+                                    | ForEach-Object { $Matches.Values }
+                                )
+                            ) -and
+                            (
+                                $_.Name -match $(
+                                    ($FullEpisodeNumber -match '[eE]\d{2}')
+                                    | Select-Object -First 1
+                                    # Returns Section of the String that the Regex Validated
+                                    | ForEach-Object { $Matches.Values }
                         )
                     )
                 }
@@ -305,11 +304,11 @@ Function Format-TVShow {
                     # Verify file needs to be renamed.
                     if ($NewName -cne $_.Name ) {
                         Write-Verbose "Renamed Filename: `"$($_.Name)`" to `"$NewName`"."
-                    try {
-                        Rename-Item -Path $_ -NewName $NewName -ErrorAction Stop -PassThru
-                    }
-                    catch {
-                        Write-Error -Message "Unable to Rename $($_.Name) to $NewName. `n $_"
+                        try {
+                            Rename-Item -Path $_ -NewName $NewName -ErrorAction Stop -PassThru
+                        }
+                        catch {
+                            Write-Error -Message "Unable to Rename $($_.Name) to $NewName. `n $_"
                         }
                     }
                 }

@@ -24,6 +24,10 @@ PS> Copy-FolderStructure './Warehouse 13/'
 Will create a copy of every file and folder under the './Warehouse 13/' folder with the files
 having 0k size and that copy folder will be located under the user home directory.
 
+.NOTES
+Author: Bradley Herbst
+Created: October 9th, 2017
+
 #>
 Function Copy-FolderStructure {
     param(

@@ -32,8 +32,6 @@ considering only folders with files that haven't been modified in the last 12 ho
 .NOTES
 Author: Bradley Herbst
 Created: Oct 13, 2021
-
-Currently this function requires windows
 #>
 Function Move-TranscodedMovies {
     param(

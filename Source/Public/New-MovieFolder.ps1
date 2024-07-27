@@ -33,6 +33,9 @@ System.Void
 This function does not return any output.
 
 .NOTES
+Author: Bradley Herbst
+Created: July 26, 2024
+
 The function uses Get-MovieFolderName and New-MovieSubFolders to create and organize movie folders.
 Ensure that the API key is valid and has the necessary permissions.
 #>

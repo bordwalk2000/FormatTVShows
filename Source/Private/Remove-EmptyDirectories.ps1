@@ -1,15 +1,18 @@
 <#
 .SYNOPSIS
-    Removes empty directories from the specified path.
+Removes empty directories from the specified path.
 
 .DESCRIPTION
-    The `Remove-EmptyDirectories` function removes directories that do not contain any files. It recursively traverses the specified path to identify and remove empty directories.
+The `Remove-EmptyDirectories` function removes directories that do not contain any files. It recursively traverses the specified path to identify and remove empty directories.
 
 .PARAMETER Path
-    The path from which empty directories will be removed. This parameter is mandatory and must be a valid path.
+The path from which empty directories will be removed. This parameter is mandatory and must be a valid path.
 
 .NOTES
-    Use this function with caution, as it will permanently remove empty directories and all empty subdirectories.
+Author: Bradley Herbst
+Created: March 12th, 2018
+
+Use this function with caution, as it will permanently remove empty directories and all empty subdirectories.
 #>
 Function Remove-EmptyDirectories {
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute(

@@ -274,11 +274,15 @@ Function Format-TVShow {
                 # Against the Currently Processed Episode and Renames the File
                 Get-ChildItem -Path $UpdatedFolderPath -File -Recurse
                 | Where-Object {
-                    # Make sure only looking at video files.
+                    # Filter results to only contain following video files formats.
                     $_.Extension -in @(
                         '.mkv', '.avi', '.mov', '.wmv', '.mp4', '.m4v', '.mpg', '.mpeg', '.flv'
                     ) -and
                     (
+                        # Find file that contains both correct season & episode name
+                        (
+                            (
+                                # Match Season Number
                                 $_.Name -match $(
                                     ($FullEpisodeNumber -match '[sS]\d{2}')
                                     | Select-Object -First 1
@@ -287,11 +291,54 @@ Function Format-TVShow {
                                 )
                             ) -and
                             (
+                                # Match Episode Number
                                 $_.Name -match $(
                                     ($FullEpisodeNumber -match '[eE]\d{2}')
                                     | Select-Object -First 1
                                     # Returns Section of the String that the Regex Validated
                                     | ForEach-Object { $Matches.Values }
+                                )
+                            )
+                        ) -or
+                        # If Season is not part of episode number try pulling it from parent folder.
+                        (
+                            (
+                                # Match season folder
+                                (
+                                    # Convert season folder number to 2 digits and add 'S' before the number.
+                                    "S{0:D2}" -f [int](
+                                        # Remove everything from Season folder Name except numbers and spaces
+                                        # Then grab the first group of numbers before a space
+                                        (
+                                        (Split-Path $_.Directory -Leaf) -replace '[^0-9$ ]', ''
+                                        ).TrimStart().Split(' ')[0]
+                                    )
+                                ) -eq $FullEpisodeNumber.Split('.')[0]
+                            ) -and
+                            (
+                                # Match episode number
+                                (
+                                    # Convert episode number to two digits and add 'E' before the number.
+                                    "E{0:D2}" -f [int](
+                                        # Remove everything from episode folder Name except numbers and spaces
+                                        # Then grab the first group of numbers before a space
+                                        (
+                                            $_.Name -replace '[^0-9$ ]', ''
+                                        ).TrimStart().Split(' ')[0]
+                                    )
+                                ) -eq $FullEpisodeNumber.Split('.')[-1]
+                            ) -and
+                            (
+                                # Make sure Season number can't be pulled from episode Name
+                                -not(
+                                    $_.Name -match $(
+                                        ($FullEpisodeNumber -match '[sS]\d{2}')
+                                        | Select-Object -First 1
+                                        # Returns Section of the String that the Regex Validated
+                                        | ForEach-Object { $Matches.Values }
+                                    )
+                                )
+                            )
                         )
                     )
                 }

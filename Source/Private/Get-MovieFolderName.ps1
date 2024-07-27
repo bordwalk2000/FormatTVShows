@@ -64,32 +64,32 @@ Function Get-MovieFolderName {
     process {
         foreach ($Movie in $MovieSearchString) {
             # Pull data from TheMovieDB API
-            $QueryResults = Find-TheMovieDBMovie -SearchString $Movie -APIKey $TheMovieDB_API
+            if (Find-TheMovieDBMovie -SearchString $Movie -APIKey $TheMovieDB_API -OutVariable QueryResults) {
+                # Move 'The/A/An' to the End of the Title
+                $FormattedMoveTitle = $QueryResults.Title -replace '^(the|a|an) (.*)$', '$2, $1'
 
-            # Move 'The/A/An' to the End of the Title
-            $FormattedMoveTitle = $QueryResults.Title -replace '^(the|a|an) (.*)$', '$2, $1'
+                # Remove Colon from the Name; Not a Supported File Name Character on Windows
+                $FormattedMoveTitle = $FormattedMoveTitle -Replace (': ', ' - ')
 
-            # Remove Colon from the Name; Not a Supported File Name Character on Windows
-            $FormattedMoveTitle = $FormattedMoveTitle -Replace (': ', ' - ')
+                # Replace Open Parentheses with Dash
+                $FormattedMoveTitle = $FormattedMoveTitle -Replace (' \(', ' - ')
 
-            # Replace Open Parentheses with Dash
-            $FormattedMoveTitle = $FormattedMoveTitle -Replace (' \(', ' - ')
+                # Remove Special Characters Not Supported On Different Operating Systems As Valid File Name Characters.
+                $FormattedMoveTitle = $FormattedMoveTitle -Replace '[?(){}]'
 
-            # Remove Special Characters Not Supported On Different Operating Systems As Valid File Name Characters.
-            $FormattedMoveTitle = $FormattedMoveTitle -Replace '[?(){}]'
+                # Remove Colon from the Name; Not a Supported Windows Filename Character.
+                if ($IsWindows) {
+                    $FormattedMoveTitle = $FormattedMoveTitle -replace "[$InvalidFileNameChars]", ''
+                }
 
-            # Remove Colon from the Name; Not a Supported Windows Filename Character.
-            if ($IsWindows) {
-                $FormattedMoveTitle = $FormattedMoveTitle -replace "[$InvalidFileNameChars]", ''
+                # Grab Year Movie Came Out
+                $MovieYear = '{0:yyyy}' -f [DateTime]$QueryResults.release_date
+
+                # Create String for Movie Folder Name
+                $MovieFolderString = "$FormattedMoveTitle ($MovieYear)"
+
+                return $MovieFolderString
             }
-
-            # Grab Year Movie Came Out
-            $MovieYear = '{0:yyyy}' -f [DateTime]$QueryResults.release_date
-
-            # Create String for Movie Folder Name
-            $MovieFolderString = "$FormattedMoveTitle ($MovieYear)"
-
-            return $MovieFolderString
         }
     }
 }

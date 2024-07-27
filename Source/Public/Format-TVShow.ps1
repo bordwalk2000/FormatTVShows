@@ -97,7 +97,7 @@ Function Format-TVShow {
     )
 
     begin {
-        # System Check for Invalid File Name Characters
+        # System Check for Invalid Filename Characters
         $InvalidFileNameChars = [string]::join('*',
             ([IO.Path]::GetInvalidFileNameChars())
         ) -replace '\\', '\\'
@@ -175,13 +175,13 @@ Function Format-TVShow {
         # Move 'The/A/An' to the End of the Title
         $FormattedTVShowName = $TVShowInfo.name -replace '^(the|a|an) (.*)$', '$2, $1'
 
-        # Remove Colon from the Name; Not a Supported File Name Character on Windows
+        # Remove Colon from the Name; Not a Supported Filename Character on Windows
         $FormattedTVShowName = $FormattedTVShowName -Replace (': ', ' - ')
 
         # Replace Open Parentheses with Dash
         $FormattedTVShowName = $FormattedTVShowName -Replace (' \(', ' - ')
 
-        # Remove Special Characters Not Supported On Different Operating Systems As Valid File Name Characters.
+        # Remove Special Characters Not Supported On Different Operating Systems As Valid Filename Characters.
         $FormattedTVShowName = $FormattedTVShowName -Replace '[?(){}]'
 
         # Remove Colon from the Name; Not a Supported Windows Filename Character.
@@ -263,10 +263,11 @@ Function Format-TVShow {
                 # Replace Open Parentheses with Dash
                 $EpisodeTitle = $EpisodeTitle -Replace (' \(', ' - ')
 
-                # Remove Special Characters Not Supported On Different Operating Systems As Valid File Name Characters.
+                # Remove Special Characters Not Supported On Different Operating Systems
+                # to Valid Filename Characters.
                 $EpisodeTitle = $EpisodeTitle -Replace '[?(){}]'
 
-                # Verify No Invalid File Name Characters in Episode Name
+                # Verify No Invalid Filename Characters in Episode Name
                 $EpisodeTitle = $EpisodeTitle -replace "[$InvalidFileNameChars]", ''
                 Write-Debug "Filtered Episode Title: $EpisodeTitle"
 
@@ -274,6 +275,7 @@ Function Format-TVShow {
                 # Against the Currently Processed Episode and Renames the File
                 Get-ChildItem -Path $UpdatedFolderPath -File -Recurse
                 | Where-Object {
+                    # Make sure only looking at video files.
                     $_.Extension -in @(
                         '.mkv', '.avi', '.mov', '.wmv', '.mp4', '.m4v', '.mpg', '.mpeg', '.flv'
                     ) -and
@@ -296,13 +298,19 @@ Function Format-TVShow {
                 }
                 # Rename the File Found to Correct Name Format
                 | ForEach-Object {
-                    $NewName = ($FormattedTVShowName, $FullEpisodeNumber, $EpisodeTitle -join ' ') + $($_.extension)
+                    Write-Verbose "Episode file found: `"$($_.FullName)`""
+                    $NewName = (
+                        $FormattedTVShowName, $FullEpisodeNumber, $EpisodeTitle -join ' '
+                    ) + $($_.extension)
+                    # Verify file needs to be renamed.
+                    if ($NewName -cne $_.Name ) {
+                        Write-Verbose "Renamed Filename: `"$($_.Name)`" to `"$NewName`"."
                     try {
                         Rename-Item -Path $_ -NewName $NewName -ErrorAction Stop -PassThru
-                        Write-Debug "Renamed File Name: $NewName"
                     }
                     catch {
                         Write-Error -Message "Unable to Rename $($_.Name) to $NewName. `n $_"
+                        }
                     }
                 }
                 # Moves File to Correct Season Folder
@@ -351,7 +359,9 @@ Function Format-TVShow {
                         | Sort-Object $_.Name
                         | ForEach-Object -Begin { $count = 1 } -Process {
                             # Replace "English" with "en"
-                            $SubtitleName = ($_.BaseName.Replace('English', 'en')) + $(if ($count -gt 1) { ".$count" })
+                            $SubtitleName = (
+                                $_.BaseName.Replace('English', 'en')
+                            ) + $(if ($count -gt 1) { ".$count" })
                             # Grabs Episode Name
                             $EpisodeName = ($TVShowInfo.name, $FullEpisodeNumber, $EpisodeTitle -join ' ')
                             # Combines the strings
@@ -360,7 +370,7 @@ Function Format-TVShow {
                             # Renames the Files Found
                             try {
                                 Rename-Item -Path $_ -NewName $NewName -ErrorAction Stop -PassThru
-                                Write-Debug "Renamed File Name: $NewName"
+                                Write-Debug "Renamed Subtitle Filename: $NewName"
                             }
                             catch {
                                 $Message = "Unable to Rename / Move file to $EpisodeName. `n$_."

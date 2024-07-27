@@ -232,7 +232,7 @@ Function Format-TVShow {
                 )
             }
 
-            # Define Parameters to be Used in Get-TheMovieDBSeasonInfo Function
+            # Define Parameters to be Used in Get-TheMovieDBTVShowSeasonInfo Function
             $Params = @{
                 TVShowID     = $TVShowID
                 SeasonNumber = $_.season_number
@@ -240,7 +240,7 @@ Function Format-TVShow {
                 BaseURL      = $BaseURL
             }
             # Call API to Get Season Info and Processes Data on the Episodes
-            (Get-TheMovieDBSeasonInfo @Params).episodes
+            (Get-TheMovieDBTVShowSeasonInfo @Params).episodes
             | Sort-Object episode_number
             | ForEach-Object {
                 # Creates String for Specifying 2-Digit Season and Episode Numbers

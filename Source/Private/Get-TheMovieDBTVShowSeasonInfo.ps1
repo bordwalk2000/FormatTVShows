@@ -18,19 +18,34 @@
     The base URL for the TMDb API. The default value is "https://api.themoviedb.org/3". This parameter is optional.
 
 .EXAMPLE
-    Get-TheMovieDBSeasonInfo -TVShowID 1399 -SeasonNumber 1 -APIKey "your_api_key"
+    Get-TheMovieDBTVShowSeasonInfo -TVShowID 1399 -SeasonNumber 1 -APIKey "your_api_key"
 
     This command retrieves information about the first season of the TV show with ID 1399.
 
 .NOTES
     Ensure you have a valid TheMovieDB API key to use this function.
 #>
-Function Get-TheMovieDBSeasonInfo {
+Function Get-TheMovieDBTVShowSeasonInfo {
     param(
-        [Parameter(Mandatory)][int] $TVShowID,
-        [Parameter(Mandatory)][int] $SeasonNumber,
-        [string] $APIKey,
-        [string] $BaseURL = "https://api.themoviedb.org/3"
+        [Parameter(
+            Mandatory
+        )]
+        [int]
+        $TVShowID,
+
+        [Parameter(
+            Mandatory
+        )]
+        [int]
+        $SeasonNumber,
+
+        [Parameter()]
+        [string]
+        $APIKey,
+
+        [Parameter()]
+        [string]
+        $BaseURL = "https://api.themoviedb.org/3"
     )
 
     # Create TV Show Season URI

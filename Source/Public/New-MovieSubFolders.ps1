@@ -12,12 +12,12 @@ The name of the movie folder to be created.
 The path where the movie folder and its subfolders will be created. This is a mandatory parameter.
 
 .EXAMPLE
-New-MovieFolderStructure -MovieFolderName "NewMovie" -SaveLocation "C:\Movies"
+New-MovieSubFolders -MovieFolderName "NewMovie" -SaveLocation "C:\Movies"
 
 Creates a new folder named "NewMovie" in the "C:\Movies" directory with the predefined subfolders.
 
 .EXAMPLE
-New-MovieFolderStructure .
+New-MovieSubFolders .
 
 Creates the predefined subfolders in the current directory.
 
@@ -25,23 +25,27 @@ Creates the predefined subfolders in the current directory.
 Author: Bradley Herbst
 Created: Oct 13, 2021
 #>
-Function New-MovieFolderStructure {
+Function New-MovieSubFolders {
     param (
         [Parameter()]
         [string]
         $MovieFolderName,
 
         [Parameter(
-            Position = 0,
             Mandatory,
+            Position = 0,
+            ValueFromPipeline,
+            ValueFromPipelineByPropertyName,
             HelpMessage = "Path to create the empty movie folders."
         )]
+        [Alias("PSPath")]
         [ValidateScript(
             {
                 Test-Path -Path $_
             }
         )]
-        [IO.DirectoryInfo] $SaveLocation
+        [IO.DirectoryInfo]
+        $SaveLocation
     )
 
     # Define params for New-Item for movie folder name directory.
